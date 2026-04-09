@@ -1,6 +1,6 @@
 {
-  "name": "NutriTrack",
-  "short_name": "NutriTrack",
+  "name": "NailedMacros",
+  "short_name": "NailedMacros",
   "description": "Seguimiento diario de calorías y macronutrientes",
   "start_url": "/hoy",
   "scope": "/",

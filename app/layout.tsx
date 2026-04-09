@@ -15,13 +15,13 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "NutriTrack",
+  title: "NailedMacros",
   description: "Seguimiento diario de calorías y macronutrientes",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "NutriTrack",
+    title: "NailedMacros",
   },
 };
 

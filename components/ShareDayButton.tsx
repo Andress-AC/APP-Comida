@@ -18,7 +18,7 @@ export default function ShareDayButton({ date, dateLabel, totals, goalsMet, stre
 
   function buildText() {
     const lines: string[] = [
-      `🍽️ Mi día en NutriTrack — ${dateLabel}`,
+      `🍽️ Mi día en NailedMacros — ${dateLabel}`,
       "",
       `⚡ ${Math.round(totals.kcal)} kcal`,
       `💪 Proteína: ${totals.protein}g`,
@@ -38,7 +38,7 @@ export default function ShareDayButton({ date, dateLabel, totals, goalsMet, stre
     }
 
     lines.push("");
-    lines.push("Registrado con NutriTrack 💚");
+    lines.push("Registrado con NailedMacros 💚");
 
     return lines.join("\n");
   }

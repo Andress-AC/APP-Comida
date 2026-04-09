@@ -15,7 +15,7 @@ export default function RegisterPage() {
 
   return (
     <div className="glass-card p-8">
-      <h1 className="heading-display text-2xl text-center mb-1">NutriTrack</h1>
+      <h1 className="heading-display text-2xl text-center mb-1">NailedMacros</h1>
       <p className="text-center text-white/30 text-sm mb-6">Crear cuenta</p>
       <form action={formAction} className="space-y-4">
         <div>
