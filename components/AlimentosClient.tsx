@@ -30,12 +30,13 @@ export default function AlimentosClient({ foods, favIds }: Props) {
   const [activeStores, setActiveStores] = useState<Set<Store>>(
     new Set(["mercadona", "consum", "otros"] as Store[])
   );
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
 
   function toggleStore(store: Store) {
     setActiveStores((prev) => {
       const next = new Set(prev);
       if (next.has(store)) {
-        if (next.size === 1) return prev; // always keep at least one active
+        if (next.size === 1) return prev;
         next.delete(store);
       } else {
         next.add(store);
@@ -45,9 +46,20 @@ export default function AlimentosClient({ foods, favIds }: Props) {
   }
 
   const filtered = useMemo(
-    () => foods.filter((f) => activeStores.has(getStore(f))),
-    [foods, activeStores]
+    () => foods.filter((f) => {
+      if (!activeStores.has(getStore(f))) return false;
+      if (categoryFilter && (f.category ?? "Otros") !== categoryFilter) return false;
+      return true;
+    }),
+    [foods, activeStores, categoryFilter]
   );
+
+  // Categories present after store filter (for the dropdown options)
+  const availableCategories = useMemo(() => {
+    const storeFiltered = foods.filter((f) => activeStores.has(getStore(f)));
+    const cats = new Set(storeFiltered.map((f) => f.category ?? "Otros"));
+    return FOOD_CATEGORIES.filter((c) => cats.has(c));
+  }, [foods, activeStores]);
 
   const favorites = useMemo(
     () =>
@@ -73,7 +85,7 @@ export default function AlimentosClient({ foods, favIds }: Props) {
   }, [filtered]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Store filter */}
       <div className="flex gap-2 flex-wrap">
         {(["mercadona", "consum", "otros"] as Store[]).map((store) => (
@@ -92,12 +104,24 @@ export default function AlimentosClient({ foods, favIds }: Props) {
         ))}
       </div>
 
+      {/* Category filter */}
+      <select
+        value={categoryFilter}
+        onChange={(e) => setCategoryFilter(e.target.value)}
+        className="input-dark w-full"
+      >
+        <option value="">Todas las categorías</option>
+        {availableCategories.map((cat) => (
+          <option key={cat} value={cat}>{cat}</option>
+        ))}
+      </select>
+
       {filtered.length === 0 && (
         <p className="text-center py-8" style={{ color: 'var(--text-muted)' }}>No hay alimentos</p>
       )}
 
-      {/* Favorites section */}
-      {favorites.length > 0 && (
+      {/* Favorites section — only when no category filter active */}
+      {favorites.length > 0 && !categoryFilter && (
         <section>
           <h2
             className="text-xs font-semibold uppercase tracking-wider mb-3"
