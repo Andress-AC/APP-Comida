@@ -55,7 +55,6 @@ export default function DeleteFoodButton({ foodId, label = "Eliminar alimento", 
           </button>
           <button
             onClick={handleDelete}
-            disabled={state === "loading"}
             className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold transition-all"
             style={{ background: 'rgba(239,68,68,0.2)', color: '#f87171', border: '1px solid rgba(239,68,68,0.4)' }}
           >
