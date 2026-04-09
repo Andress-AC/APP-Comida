@@ -49,7 +49,9 @@ export default async function FoodDetailPage({
             isAdmin={isAdmin}
             onSubmit={async (formData) => {
               "use server";
-              return updateFood(id, formData);
+              const result = await updateFood(id, formData);
+              if (!result?.error) redirect(`/alimentos#food-${id}`);
+              return result;
             }}
             submitLabel="Guardar cambios"
           />
@@ -77,7 +79,7 @@ export default async function FoodDetailPage({
             onSubmit={async (formData) => {
               "use server";
               const result = await cloneAndEditFood(id, formData);
-              if (!result.error) redirect("/alimentos");
+              if (!result.error) redirect(`/alimentos#food-${id}`);
               return result;
             }}
             submitLabel="Guardar mi versión"

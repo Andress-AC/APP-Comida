@@ -9,6 +9,7 @@ interface Props {
 
 export default function FoodCard({ food, isFavorite = false }: Props) {
   return (
+    <div id={`food-${food.id}`}>
     <Link
       href={`/alimentos/${food.id}`}
       className="block glass-card p-4 hover:border-amber-500/40 transition-all duration-300"
@@ -38,5 +39,6 @@ export default function FoodCard({ food, isFavorite = false }: Props) {
         <FavoriteButton id={food.id} type="food" initialFavorite={isFavorite} />
       </div>
     </Link>
+    </div>
   );
 }
