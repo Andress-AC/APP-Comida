@@ -19,7 +19,7 @@ export default function BottomNav() {
   return (
     <nav className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-lg">
       <div
-        className="flex justify-around items-center h-16 px-2 rounded-2xl"
+        className="flex justify-around items-center h-16 px-1 rounded-2xl"
         style={{
           background: 'rgba(6, 15, 30, 0.90)',
           backdropFilter: 'blur(28px)',
@@ -34,7 +34,7 @@ export default function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              className="flex flex-col items-center gap-0.5 relative px-2 py-1 transition-all duration-200"
+              className="flex flex-col items-center gap-0.5 relative px-1.5 py-1 min-w-0 transition-all duration-200"
             >
               {active && (
                 <span
@@ -53,7 +53,7 @@ export default function BottomNav() {
                 <path strokeLinecap="round" strokeLinejoin="round" d={tab.icon} />
               </svg>
               <span
-                className="text-[10px] font-medium transition-colors duration-200"
+                className="text-[9px] font-medium transition-colors duration-200 truncate w-full text-center"
                 style={{ color: active ? 'var(--amber)' : 'var(--text-muted)' }}
               >
                 {tab.label}

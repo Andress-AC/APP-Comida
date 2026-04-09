@@ -25,7 +25,7 @@ export default async function AppLayout({
       <header className="sticky top-0 z-40" style={{ background: 'linear-gradient(180deg, var(--bg-deep) 65%, transparent)' }}>
         <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
           <h1 className="heading-display text-xl tracking-tight">
-            <span className="text-warm">Nutri</span>Track
+            <span className="text-warm">Nailed</span>Macros
           </h1>
           <form action={logout}>
             <button
