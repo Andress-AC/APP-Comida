@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import FoodForm from "@/components/FoodForm";
-import { updateFood, deleteFood } from "@/actions/foods";
+import { updateFood, deleteFood, cloneAndEditFood } from "@/actions/foods";
 import { FoodWithUnits } from "@/lib/types";
 import FoodUnitsList from "./FoodUnitsList";
+import DeleteFoodButton from "@/components/DeleteFoodButton";
 
 export default async function FoodDetailPage({
   params,
@@ -29,16 +30,23 @@ export default async function FoodDetailPage({
     .single();
 
   const isOwner = food.created_by === user!.id;
+  const isAdmin = profile?.is_admin ?? false;
+  const canEditDirectly = isOwner || isAdmin;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">{food.name}</h1>
+      <h1 className="heading-display text-2xl">{food.name}</h1>
 
-      {isOwner ? (
+      {canEditDirectly ? (
         <>
+          {isAdmin && !isOwner && (
+            <p className="text-xs px-3 py-2 rounded-lg" style={{ color: 'var(--amber)', background: 'var(--amber-glow)', border: '1px solid var(--border-warm-strong)' }}>
+              Editando alimento global — los cambios afectan a todos los usuarios
+            </p>
+          )}
           <FoodForm
             food={food}
-            isAdmin={profile?.is_admin}
+            isAdmin={isAdmin}
             onSubmit={async (formData) => {
               "use server";
               return updateFood(id, formData);
@@ -47,37 +55,36 @@ export default async function FoodDetailPage({
           />
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Unidades</h2>
+            <h2 className="text-lg font-semibold text-white/80">Unidades</h2>
             <FoodUnitsList food={food as FoodWithUnits} />
           </section>
 
-          <form
-            action={async () => {
-              "use server";
-              await deleteFood(id);
-              redirect("/alimentos");
-            }}
-          >
-            <button
-              type="submit"
-              className="w-full bg-red-600 text-white rounded-lg py-2 font-medium hover:bg-red-700"
-            >
-              Eliminar alimento
-            </button>
-          </form>
+          <DeleteFoodButton
+            foodId={id}
+            label={isAdmin && !isOwner ? "Eliminar alimento global" : "Eliminar alimento"}
+            isGlobalAdmin={isAdmin && !isOwner}
+          />
         </>
       ) : (
-        <div className="bg-white rounded-lg border p-4 space-y-2">
-          <p className="text-sm text-gray-500">
-            Alimento global — no editable
+        <>
+          <p className="text-xs text-white/30">
+            Alimento global — editar crea una copia personal solo para ti
           </p>
-          <p><strong>Calorias:</strong> {food.kcal} kcal/100g</p>
-          <p><strong>Proteinas:</strong> {food.protein}g</p>
-          <p><strong>Grasas:</strong> {food.fat}g ({food.saturated_fat}g sat.)</p>
-          <p><strong>Carbos:</strong> {food.carbs}g ({food.sugar}g azuc.)</p>
-          <p><strong>Fibra:</strong> {food.fiber}g</p>
-          <p><strong>Sal:</strong> {food.salt}g</p>
-        </div>
+
+          <FoodForm
+            food={food}
+            isAdmin={false}
+            onSubmit={async (formData) => {
+              "use server";
+              const result = await cloneAndEditFood(id, formData);
+              if (!result.error) redirect("/alimentos");
+              return result;
+            }}
+            submitLabel="Guardar mi versión"
+          />
+
+          <DeleteFoodButton foodId={id} label="Ocultar alimento" />
+        </>
       )}
     </div>
   );

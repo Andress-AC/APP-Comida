@@ -42,11 +42,11 @@ export default async function RecipeDetailPage({
           name="name"
           required
           defaultValue={recipe.name}
-          className="flex-1 text-2xl font-bold bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-500"
+          className="flex-1 text-2xl font-bold bg-transparent border-b border-white/10 text-white/90 focus:outline-none focus:border-amber-500 heading-display"
         />
         <button
           type="submit"
-          className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700"
+          className="btn-primary !py-1"
         >
           Renombrar
         </button>
@@ -57,16 +57,16 @@ export default async function RecipeDetailPage({
         initial={(recipe.categories ?? ["comida", "cena"]) as MealCategory[]}
       />
 
-      <div className="bg-white rounded-lg border p-4">
-        <h2 className="text-sm font-semibold text-gray-500 mb-2">Macros totales</h2>
-        <p className="text-lg font-bold">{macros.kcal} kcal</p>
-        <p className="text-sm text-gray-600">
+      <div className="glass-card p-4">
+        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-2">Macros totales</h2>
+        <p className="text-lg font-bold text-amber-500">{macros.kcal} kcal</p>
+        <p className="text-sm text-white/50">
           {macros.protein}g prot · {macros.fat}g grasa · {macros.carbs}g carbs
         </p>
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Ingredientes</h2>
+        <h2 className="text-lg font-semibold text-white/80">Ingredientes</h2>
         <RecipeIngredientEditor
           recipeId={id}
           ingredients={recipe.recipe_ingredients}
@@ -83,7 +83,7 @@ export default async function RecipeDetailPage({
       >
         <button
           type="submit"
-          className="w-full bg-red-600 text-white rounded-lg py-2 font-medium hover:bg-red-700"
+          className="btn-danger w-full"
         >
           Eliminar receta
         </button>

@@ -29,16 +29,16 @@ export default function RecipeIngredientEditor({
       {ingredients.map((ing) => (
         <div
           key={ing.id}
-          className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+          className="flex items-center justify-between bg-white/[0.03] rounded-xl px-3 py-2"
         >
-          <span>
+          <span className="text-white/70">
             {ing.food.name} — {ing.quantity_grams}g
           </span>
           <div className="flex gap-2">
             <input
               type="number"
               defaultValue={ing.quantity_grams}
-              className="w-20 rounded border px-2 py-1 text-sm"
+              className="input-dark w-20 !py-1 !px-2"
               onBlur={async (e) => {
                 const val = Number(e.target.value);
                 if (val > 0 && val !== ing.quantity_grams) {
@@ -48,7 +48,7 @@ export default function RecipeIngredientEditor({
             />
             <button
               onClick={() => removeIngredient(ing.id, recipeId)}
-              className="text-red-500 text-sm hover:underline"
+              className="text-red-400/60 text-sm hover:text-red-400 transition-colors"
             >
               Quitar
             </button>
@@ -60,7 +60,7 @@ export default function RecipeIngredientEditor({
         <select
           value={selectedFood}
           onChange={(e) => setSelectedFood(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="input-dark flex-1"
         >
           <option value="">Seleccionar alimento...</option>
           {availableFoods.map((f) => (
@@ -74,7 +74,7 @@ export default function RecipeIngredientEditor({
           placeholder="g"
           value={grams}
           onChange={(e) => setGrams(e.target.value)}
-          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="input-dark w-20"
         />
         <button
           onClick={async () => {
@@ -84,7 +84,7 @@ export default function RecipeIngredientEditor({
               setGrams("");
             }
           }}
-          className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700"
+          className="btn-primary"
         >
           Añadir
         </button>

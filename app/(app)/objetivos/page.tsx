@@ -46,13 +46,13 @@ export default async function ObjetivosPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold">Objetivos</h1>
+      <h1 className="heading-display text-2xl">Objetivos</h1>
 
       <DayStartHourSetting currentHour={profile?.day_start_hour ?? 5} />
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Por defecto</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-lg font-semibold text-white/80">Por defecto</h2>
+        <p className="text-sm text-white/40">
           Se aplican a los días sin configuración específica.
         </p>
         {ALL_MACROS.map((macro) => {
@@ -82,10 +82,10 @@ export default async function ObjetivosPage() {
         );
         return (
           <details key={dayValue} className="space-y-3">
-            <summary className="text-lg font-semibold cursor-pointer">
+            <summary className="text-lg font-semibold text-white/70 cursor-pointer hover:text-white/90 transition-colors">
               {dayName}
               {dayGoals.length > 0 && (
-                <span className="text-sm text-blue-600 ml-2">
+                <span className="text-sm text-amber-500/70 ml-2">
                   ({dayGoals.length} objetivo(s))
                 </span>
               )}
@@ -116,20 +116,20 @@ export default async function ObjetivosPage() {
       })}
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Excepciones por fecha</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-lg font-semibold text-white/80">Excepciones por fecha</h2>
+        <p className="text-sm text-white/40">
           Objetivos para días concretos (ej: un domingo especial).
         </p>
         {(overrides ?? []).length > 0 && (
           <div className="space-y-1 text-sm">
             {(overrides ?? []).map((o: any) => (
-              <div key={o.id} className="bg-gray-50 px-3 py-1 rounded">
+              <div key={o.id} className="bg-white/[0.03] px-3 py-1 rounded-xl text-white/60">
                 {o.date} — {o.macro}: {o.goal_type} {o.value_min ?? ""}{o.value_max ? `-${o.value_max}` : ""}
               </div>
             ))}
           </div>
         )}
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-white/25">
           Las excepciones se pueden crear desde el Historial haciendo click en un día.
         </p>
       </section>

@@ -20,7 +20,7 @@ export default async function DespensaPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Despensa</h1>
+      <h1 className="heading-display text-2xl">Despensa</h1>
 
       <form
         action={async (formData: FormData) => {
@@ -31,14 +31,14 @@ export default async function DespensaPage() {
             await addToPantry(foodId, grams);
           }
         }}
-        className="bg-white rounded-lg border p-4 space-y-3"
+        className="glass-card p-4 space-y-3"
       >
-        <h3 className="font-medium text-sm text-gray-600">Añadir a despensa</h3>
+        <h3 className="text-xs font-medium text-white/40 uppercase tracking-wider">Añadir a despensa</h3>
         <div className="flex gap-2">
           <select
             name="food_id"
             required
-            className="flex-1 rounded-lg border px-3 py-2 text-sm"
+            className="input-dark flex-1"
           >
             <option value="">Seleccionar alimento...</option>
             {(foods ?? []).map((f: any) => (
@@ -51,11 +51,11 @@ export default async function DespensaPage() {
             required
             min="1"
             placeholder="Gramos"
-            className="w-28 rounded-lg border px-3 py-2 text-sm"
+            className="input-dark w-28"
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+            className="btn-primary"
           >
             Añadir
           </button>
@@ -67,7 +67,7 @@ export default async function DespensaPage() {
           <PantryItemRow key={item.id} item={item} />
         ))}
         {pantryItems?.length === 0 && (
-          <p className="text-gray-500 text-center py-8">Despensa vacía</p>
+          <p className="text-white/30 text-center py-8">Despensa vacía</p>
         )}
       </div>
     </div>

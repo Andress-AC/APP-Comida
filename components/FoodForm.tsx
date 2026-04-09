@@ -2,6 +2,7 @@
 
 import { Food } from "@/lib/types";
 import { ALL_MACROS, MACRO_LABELS, MACRO_UNITS } from "@/lib/types";
+import { FOOD_CATEGORIES } from "@/lib/categories";
 import { useActionState, useRef, useState } from "react";
 
 interface Props {
@@ -34,9 +35,7 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
     if (e.key === "Enter") {
       e.preventDefault();
       const next = macroRefs.current[index + 1];
-      if (next) {
-        next.focus();
-      }
+      if (next) next.focus();
     }
   }
 
@@ -49,22 +48,18 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">Nombre</label>
-        <input
-          name="name"
-          required
-          defaultValue={food?.name}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Nombre</label>
+        <input name="name" required defaultValue={food?.name} className="input-dark w-full" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Marca</label>
+        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Marca</label>
         <div className="flex gap-2">
           <select
             value={brandMode}
             onChange={(e) => setBrandMode(e.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input-dark"
+            style={{ width: 'auto' }}
           >
             <option value="Mercadona">Mercadona</option>
             <option value="Consum">Consum</option>
@@ -76,7 +71,7 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
               value={customBrand}
               onChange={(e) => setCustomBrand(e.target.value)}
               placeholder="Nombre de la marca"
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-dark flex-1"
             />
           )}
         </div>
@@ -84,19 +79,28 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Imagen (opcional)</label>
-        <input
-          name="image"
-          type="file"
-          accept="image/*"
-          className="w-full text-sm"
-        />
+        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Categoría</label>
+        <select
+          name="category"
+          defaultValue={food?.category ?? ""}
+          className="input-dark w-full"
+        >
+          <option value="">Sin categoría</option>
+          {FOOD_CATEGORIES.map((cat) => (
+            <option key={cat} value={cat}>{cat}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Imagen (opcional)</label>
+        <input name="image" type="file" accept="image/*" className="text-sm" style={{ color: 'var(--text-muted)' }} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         {ALL_MACROS.map((macro, idx) => (
           <div key={macro}>
-            <label className="block text-sm font-medium mb-1">
+            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
               {MACRO_LABELS[macro]} ({MACRO_UNITS[macro]}/100g)
             </label>
             <input
@@ -109,31 +113,22 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
               defaultValue={food ? food[macro] : macro === "kcal" ? "" : "0"}
               onFocus={handleFocus}
               onKeyDown={(e) => handleMacroKeyDown(e, idx)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-dark w-full"
             />
           </div>
         ))}
       </div>
 
       {isAdmin && (
-        <label className="flex items-center gap-2">
-          <input
-            name="is_global"
-            type="checkbox"
-            value="true"
-            defaultChecked={food?.is_global}
-          />
-          <span className="text-sm">Alimento global (visible para todos)</span>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input name="is_global" type="checkbox" value="true" defaultChecked={food?.is_global} className="accent-amber-500" />
+          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Alimento global (visible para todos)</span>
         </label>
       )}
 
-      {state?.error && <p className="text-red-600 text-sm">{state.error}</p>}
+      {state?.error && <p className="text-sm" style={{ color: 'var(--coral)' }}>{state.error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full bg-blue-600 text-white rounded-lg py-2 font-medium hover:bg-blue-700 disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending} className="btn-primary w-full">
         {pending ? "Guardando..." : submitLabel}
       </button>
     </form>

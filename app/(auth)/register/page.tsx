@@ -14,11 +14,12 @@ export default function RegisterPage() {
   );
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-center mb-6">Crear cuenta</h1>
+    <div className="glass-card p-8">
+      <h1 className="heading-display text-2xl text-center mb-1">NutriTrack</h1>
+      <p className="text-center text-white/30 text-sm mb-6">Crear cuenta</p>
       <form action={formAction} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium mb-1">
+          <label htmlFor="email" className="block text-sm font-medium text-white/50 mb-1">
             Email
           </label>
           <input
@@ -26,11 +27,11 @@ export default function RegisterPage() {
             name="email"
             type="email"
             required
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input-dark w-full"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium mb-1">
+          <label htmlFor="password" className="block text-sm font-medium text-white/50 mb-1">
             Contraseña
           </label>
           <input
@@ -39,23 +40,23 @@ export default function RegisterPage() {
             type="password"
             required
             minLength={6}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input-dark w-full"
           />
         </div>
         {state?.error && (
-          <p className="text-red-600 text-sm">{state.error}</p>
+          <p className="text-red-400 text-sm">{state.error}</p>
         )}
         <button
           type="submit"
           disabled={pending}
-          className="w-full bg-blue-600 text-white rounded-lg py-2 font-medium hover:bg-blue-700 disabled:opacity-50"
+          className="btn-primary w-full"
         >
           {pending ? "Creando..." : "Crear cuenta"}
         </button>
       </form>
-      <p className="text-center text-sm mt-4 text-gray-600">
+      <p className="text-center text-sm mt-4 text-white/40">
         ¿Ya tienes cuenta?{" "}
-        <Link href="/login" className="text-blue-600 hover:underline">
+        <Link href="/login" className="text-amber-500 hover:text-amber-400 transition-colors">
           Inicia sesión
         </Link>
       </p>

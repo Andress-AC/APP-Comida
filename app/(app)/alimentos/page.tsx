@@ -1,9 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { FoodWithUnits } from "@/lib/types";
-import FoodCard from "@/components/FoodCard";
 import FoodForm from "@/components/FoodForm";
 import SearchInput from "@/components/SearchInput";
+import BarcodeScanner from "@/components/BarcodeScanner";
+import LabelScanner from "@/components/LabelScanner";
+import AlimentosClient from "@/components/AlimentosClient";
 import { createFood } from "@/actions/foods";
+import { getFavorites } from "@/actions/favorites";
 
 export default async function AlimentosPage({
   searchParams,
@@ -14,11 +17,14 @@ export default async function AlimentosPage({
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("is_admin")
-    .eq("id", user!.id)
-    .single();
+  const [profileResult, favsResult, hiddenResult] = await Promise.all([
+    supabase.from("profiles").select("is_admin").eq("id", user!.id).single(),
+    getFavorites(),
+    supabase.from("user_hidden_foods").select("food_id").eq("user_id", user!.id),
+  ]);
+  const profile = profileResult.data;
+  const favIds = Array.from(favsResult.foodIds);
+  const hiddenIds = new Set((hiddenResult.data ?? []).map((r: any) => r.food_id as string));
 
   let query = supabase
     .from("foods")
@@ -29,17 +35,32 @@ export default async function AlimentosPage({
     query = query.ilike("name", `%${q}%`);
   }
 
-  const { data: foods } = await query;
+  const { data: rawFoods } = await query;
+  const foods = (rawFoods ?? []).filter((f: any) => !hiddenIds.has(f.id)) as FoodWithUnits[];
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Alimentos</h1>
+      <h1 className="heading-display text-2xl">Alimentos</h1>
 
       <SearchInput basePath="/alimentos" />
 
-      <details className="bg-white rounded-lg border border-gray-200 p-4">
-        <summary className="font-medium cursor-pointer">+ Añadir alimento</summary>
-        <div className="mt-4">
+      <details className="glass-card p-4">
+        <summary className="font-medium text-white/70 cursor-pointer">📷 Escanear código de barras</summary>
+        <div className="mt-4 border-t border-white/5 pt-4">
+          <BarcodeScanner />
+        </div>
+      </details>
+
+      <details className="glass-card p-4">
+        <summary className="font-medium text-white/70 cursor-pointer">🤖 Leer etiqueta con IA</summary>
+        <div className="mt-4 border-t border-white/5 pt-4">
+          <LabelScanner />
+        </div>
+      </details>
+
+      <details className="glass-card p-4">
+        <summary className="font-medium text-white/70 cursor-pointer">+ Añadir alimento</summary>
+        <div className="mt-4 border-t border-white/5 pt-4">
           <FoodForm
             isAdmin={profile?.is_admin}
             onSubmit={createFood}
@@ -48,14 +69,7 @@ export default async function AlimentosPage({
         </div>
       </details>
 
-      <div className="space-y-2">
-        {(foods as FoodWithUnits[])?.map((food) => (
-          <FoodCard key={food.id} food={food} />
-        ))}
-        {foods?.length === 0 && (
-          <p className="text-gray-500 text-center py-8">No hay alimentos</p>
-        )}
-      </div>
+      <AlimentosClient foods={foods} favIds={favIds} />
     </div>
   );
 }

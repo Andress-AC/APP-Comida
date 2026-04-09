@@ -25,14 +25,14 @@ export default function AiRecommendation({ logCount }: { logCount: number }) {
   if (!recommendation && !loading) return null;
 
   return (
-    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-      <h3 className="text-sm font-semibold text-purple-700 mb-1">
+    <div className="glass-warm p-4 animate-in animate-in-delay-1">
+      <h3 className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--amber)' }}>
         Recomendación IA
       </h3>
       {loading ? (
-        <p className="text-sm text-purple-400">Analizando tu día...</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Analizando tu día...</p>
       ) : (
-        <p className="text-sm text-purple-900">{recommendation}</p>
+        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{recommendation}</p>
       )}
     </div>
   );

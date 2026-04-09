@@ -16,19 +16,28 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white border-b px-4 py-3 flex items-center justify-between max-w-lg mx-auto">
-        <h1 className="font-bold text-lg">Calorie Tracker</h1>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="text-sm text-gray-500 hover:text-gray-700"
-          >
-            Cerrar sesión
-          </button>
-        </form>
+    <div className="min-h-screen pb-24 relative" style={{ zIndex: 1 }}>
+      {/* Animated background orbs */}
+      <div className="orb-teal" />
+      <div className="orb-blue" />
+      <div className="orb-deep" />
+
+      <header className="sticky top-0 z-40" style={{ background: 'linear-gradient(180deg, var(--bg-deep) 65%, transparent)' }}>
+        <div className="max-w-lg mx-auto px-5 py-4 flex items-center justify-between">
+          <h1 className="heading-display text-xl tracking-tight">
+            <span className="text-warm">Nutri</span>Track
+          </h1>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="text-xs text-muted hover:text-warm transition-colors"
+            >
+              Cerrar sesión
+            </button>
+          </form>
+        </div>
       </header>
-      <main className="max-w-lg mx-auto px-4 py-6">{children}</main>
+      <main className="max-w-lg mx-auto px-5 pb-6" style={{ position: 'relative', zIndex: 1 }}>{children}</main>
       <BottomNav />
     </div>
   );

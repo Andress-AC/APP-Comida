@@ -67,7 +67,7 @@ export default async function HistorialPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Historial</h1>
+      <h1 className="heading-display text-2xl">Historial</h1>
       {days.map((day) => (
         <DayHistoryCard
           key={day.date}
@@ -79,7 +79,7 @@ export default async function HistorialPage() {
         />
       ))}
       {days.length === 0 && (
-        <p className="text-gray-500 text-center py-8">
+        <p className="text-white/30 text-center py-8">
           No hay registros aún
         </p>
       )}

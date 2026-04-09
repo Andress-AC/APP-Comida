@@ -31,26 +31,26 @@ export default function RecipeCreateForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 bg-white rounded-lg border p-4">
+    <form onSubmit={handleSubmit} className="space-y-3 glass-card p-4">
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
         required
         placeholder="Nombre de la nueva receta"
-        className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="input-dark w-full"
       />
       <div>
-        <label className="text-sm font-medium text-gray-600 mb-1 block">Categorías</label>
+        <label className="text-sm font-medium text-white/50 uppercase tracking-wider mb-1 block">Categorías</label>
         <div className="flex flex-wrap gap-2">
           {MEAL_CATEGORIES.map((cat) => (
             <button
               key={cat.value}
               type="button"
               onClick={() => toggle(cat.value)}
-              className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+              className={`px-3 py-1 rounded-full text-sm border transition-all duration-200 ${
                 categories.includes(cat.value)
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                  ? "bg-amber-500 text-black font-medium border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                  : "bg-white/[0.03] text-white/50 border-white/10 hover:border-amber-500/40 hover:text-white/70"
               }`}
             >
               {cat.label}
@@ -61,7 +61,7 @@ export default function RecipeCreateForm() {
       <button
         type="submit"
         disabled={creating || !name.trim()}
-        className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+        className="btn-sage w-full"
       >
         {creating ? "Creando..." : "Crear receta"}
       </button>

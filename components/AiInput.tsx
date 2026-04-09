@@ -59,8 +59,8 @@ export default function AiInput() {
   }
 
   return (
-    <div className="bg-white rounded-lg border p-4 space-y-3">
-      <h3 className="font-medium text-sm text-gray-600">
+    <div className="glass-warm p-5 space-y-3 animate-in animate-in-delay-2">
+      <h3 className="text-sm font-semibold" style={{ color: 'var(--amber)' }}>
         Registrar con IA
       </h3>
       <div className="flex gap-2">
@@ -70,56 +70,47 @@ export default function AiInput() {
           onChange={(e) => setText(e.target.value)}
           placeholder='Ej: "200g pechuga empanada, 1 bolsa arroz"'
           onKeyDown={(e) => e.key === "Enter" && handleParse()}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="input-dark flex-1"
         />
         <button
           onClick={handleParse}
           disabled={loading || !text.trim()}
-          className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+          className="btn-primary"
         >
           {loading ? "..." : "Parsear"}
         </button>
       </div>
 
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p className="text-sm" style={{ color: 'var(--coral)' }}>{error}</p>}
 
       {parsed && (
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700">
+          <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
             He interpretado esto:
           </p>
           {parsed.map((item, i) => (
             <div
               key={i}
-              className={`text-sm px-3 py-2 rounded ${
-                item.food_id || item.recipe_id
-                  ? "bg-green-50 border border-green-200"
-                  : "bg-yellow-50 border border-yellow-200"
-              }`}
+              className="text-sm px-3 py-2 rounded-lg"
+              style={{
+                background: item.food_id || item.recipe_id ? 'var(--sage-soft)' : 'var(--coral-soft)',
+                border: `1px solid ${item.food_id || item.recipe_id ? 'rgba(107,143,113,0.2)' : 'rgba(224,122,95,0.2)'}`,
+              }}
             >
-              <span className="font-medium">{item.name}</span>
-              {item.recipe_id
-                ? ` — x${item.multiplier}`
-                : ` — ${item.quantity_grams}g`}
+              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{item.name}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                {item.recipe_id ? ` — x${item.multiplier}` : ` — ${item.quantity_grams}g`}
+              </span>
               {!item.food_id && !item.recipe_id && (
-                <span className="text-yellow-600 ml-2">
-                  (no encontrado en la BD)
-                </span>
+                <span className="ml-2" style={{ color: 'var(--coral)' }}>(no encontrado)</span>
               )}
             </div>
           ))}
           <div className="flex gap-2">
-            <button
-              onClick={handleConfirm}
-              disabled={loading}
-              className="flex-1 bg-green-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-green-700 disabled:opacity-50"
-            >
+            <button onClick={handleConfirm} disabled={loading} className="btn-sage flex-1">
               Confirmar y registrar
             </button>
-            <button
-              onClick={() => setParsed(null)}
-              className="px-4 py-2 rounded-lg text-sm border hover:bg-gray-50"
-            >
+            <button onClick={() => setParsed(null)} className="btn-ghost">
               Cancelar
             </button>
           </div>

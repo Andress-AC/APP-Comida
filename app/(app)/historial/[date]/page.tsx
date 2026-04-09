@@ -3,6 +3,7 @@ import { DailyLog, DailyExercise, MEAL_CATEGORY_LABELS, MealCategory } from "@/l
 import { calcDayTotals, calcLogMacros } from "@/lib/macros";
 import { getEffectiveGoals, evaluateGoals } from "@/lib/goals";
 import { MACRO_LABELS, MACRO_UNITS, ALL_MACROS } from "@/lib/types";
+import ShareDayButton from "@/components/ShareDayButton";
 
 export default async function DayDetailPage({
   params,
@@ -60,40 +61,52 @@ export default async function DayDetailPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold capitalize">{dateFormatted}</h1>
+      <div className="space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="heading-display text-2xl capitalize">{dateFormatted}</h1>
+          {logs.length > 0 && (
+            <ShareDayButton
+              date={date}
+              dateLabel={dateFormatted}
+              totals={totals}
+              goalsMet={goalStatuses.length > 0 ? allMet : null}
+            />
+          )}
+        </div>
         {goalStatuses.length > 0 && (
-          <p className="text-lg mt-1">{allMet ? "Objetivos cumplidos" : "Objetivos no cumplidos"}</p>
+          <p className={`text-sm ${allMet ? "text-emerald-400" : "text-red-400"}`}>
+            {allMet ? "Objetivos cumplidos" : "Objetivos no cumplidos"}
+          </p>
         )}
       </div>
 
       {noteContent && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-          <p className="text-sm text-yellow-800 italic">{noteContent}</p>
+        <div className="glass-card p-3 border-amber-500/30">
+          <p className="text-sm text-amber-200/70 italic">{noteContent}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-lg border p-4 space-y-2">
-        <h2 className="font-semibold mb-2">Resumen de macros</h2>
+      <div className="glass-card p-4 space-y-2">
+        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">Resumen de macros</h2>
         {ALL_MACROS.map((macro) => {
           const status = goalStatuses.find((s) => s.macro === macro);
           return (
             <div key={macro} className="flex items-center justify-between text-sm">
-              <span>{MACRO_LABELS[macro]}</span>
+              <span className="text-white/50">{MACRO_LABELS[macro]}</span>
               <div className="flex items-center gap-2">
-                <span className="font-medium">
+                <span className="font-medium text-white/80">
                   {totals[macro]}{MACRO_UNITS[macro]}
                 </span>
                 {status && (
                   <>
-                    <span className="text-xs">{status.met ? "OK" : "X"}</span>
+                    <span className={`w-1.5 h-1.5 rounded-full ${status.met ? "bg-emerald-400" : "bg-red-400"}`} />
                     <span
                       className={`text-xs ${
                         status.severity === "good"
-                          ? "text-green-600 font-medium"
+                          ? "text-emerald-400 font-medium"
                           : status.severity === "bad"
-                          ? "text-red-600 font-medium"
-                          : "text-gray-400"
+                          ? "text-red-400 font-medium"
+                          : "text-white/30"
                       }`}
                     >
                       ({status.difference > 0 ? "+" : ""}{status.difference})
@@ -107,42 +120,42 @@ export default async function DayDetailPage({
       </div>
 
       {(stepsEntry || activities.length > 0) && (
-        <div className="bg-white rounded-lg border p-4 space-y-2">
-          <h2 className="font-semibold mb-2">Ejercicio</h2>
+        <div className="glass-card p-4 space-y-2">
+          <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">Ejercicio</h2>
           {stepsEntry && (
-            <p className="text-sm">Pasos: <span className="font-medium">{stepsEntry.steps?.toLocaleString()}</span></p>
+            <p className="text-sm text-white/60">Pasos: <span className="font-medium text-white/80">{stepsEntry.steps?.toLocaleString()}</span></p>
           )}
           {activities.map((ex) => (
             <div key={ex.id} className="text-sm flex items-center gap-2">
-              <span>{ex.description}</span>
+              <span className="text-white/70">{ex.description}</span>
               {ex.calories_burned && (
-                <span className="text-xs text-gray-400">~{ex.calories_burned} kcal</span>
+                <span className="text-xs text-amber-500/50">~{ex.calories_burned} kcal</span>
               )}
             </div>
           ))}
           {caloriesBurned > 0 && (
-            <div className="bg-gray-50 rounded-lg px-3 py-2 text-sm space-y-1 mt-2">
+            <div className="bg-white/[0.03] rounded-xl px-3 py-2 text-sm space-y-1 mt-2">
               <div className="flex justify-between">
-                <span className="text-gray-500">Consumidas</span>
-                <span>{Math.round(totals.kcal)} kcal</span>
+                <span className="text-white/40">Consumidas</span>
+                <span className="text-white/70">{Math.round(totals.kcal)} kcal</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Quemadas</span>
-                <span className="text-green-600">-{Math.round(caloriesBurned)} kcal</span>
+                <span className="text-white/40">Quemadas</span>
+                <span className="text-emerald-400">-{Math.round(caloriesBurned)} kcal</span>
               </div>
-              <div className="flex justify-between font-medium border-t pt-1">
-                <span>Balance neto</span>
+              <div className="flex justify-between font-medium border-t border-white/5 pt-1">
+                <span className="text-white/70">Balance neto</span>
                 <span className="flex items-center gap-1.5">
-                  <span>{netKcal} kcal</span>
+                  <span className="text-white/80">{netKcal} kcal</span>
                   {kcalGoal && (() => {
                     const target = kcalGoal.goalType === "max" ? kcalGoal.max! : kcalGoal.min!;
                     const diff = netKcal - target;
                     const pct = target > 0 ? (diff / target) * 100 : 0;
-                    const color = pct > 10 ? "text-green-600" : pct < -10 ? "text-red-600" : "text-gray-400";
+                    const color = pct > 10 ? "text-emerald-400" : pct < -10 ? "text-red-400" : "text-white/30";
                     return (
                       <>
-                        <span className="text-gray-400 font-normal">/ {target}</span>
-                        <span className={`text-xs ${color}`}>({diff > 0 ? "+" : ""}{Math.round(diff)})</span>
+                        <span className="text-white/30 font-normal">/ {target}</span>
+                        <span className={`text-xs font-semibold ${color}`}>({diff > 0 ? "+" : ""}{Math.round(diff)})</span>
                       </>
                     );
                   })()}
@@ -154,7 +167,7 @@ export default async function DayDetailPage({
       )}
 
       <div className="space-y-2">
-        <h2 className="font-semibold">Detalle de comidas ({logs.length})</h2>
+        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Detalle de comidas ({logs.length})</h2>
         {logs.map((log) => {
           const macros = calcLogMacros(log);
           const name = log.food?.name ?? log.recipe?.name ?? "Desconocido";
@@ -168,16 +181,16 @@ export default async function DayDetailPage({
           return (
             <div
               key={log.id}
-              className="bg-white rounded-lg border px-4 py-3"
+              className="glass-card px-4 py-3"
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{name}</span>
-                  <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{mealLabel}</span>
+                  <span className="font-medium text-white/90">{name}</span>
+                  <span className="tag-muted">{mealLabel}</span>
                 </div>
-                <span className="text-xs text-gray-400">{time}</span>
+                <span className="text-xs text-white/25">{time}</span>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-white/40">
                 {detail} — {macros.kcal} kcal · {macros.protein}g prot · {macros.fat}g grasa · {macros.carbs}g carbs
               </p>
             </div>

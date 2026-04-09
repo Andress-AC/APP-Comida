@@ -89,6 +89,10 @@ Responde de forma directa y coloquial. No repitas los números exactos que ya ve
     const recommendation = result.response.text();
     return NextResponse.json({ recommendation });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const msg = error.message ?? "";
+    const friendly = msg.includes("429") || msg.includes("quota")
+      ? "Límite de IA alcanzado. Espera unos minutos."
+      : "Error al conectar con la IA.";
+    return NextResponse.json({ error: friendly }, { status: 500 });
   }
 }

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#060F1C"/>
+      <stop offset="100%" stop-color="#0C1A2E"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00B893"/>
+      <stop offset="100%" stop-color="#34E0BC"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="44" fill="url(#bg)"/>
+  <circle cx="96" cy="96" r="72" fill="none" stroke="rgba(0,212,170,0.12)" stroke-width="1"/>
+  <circle cx="96" cy="96" r="68" fill="none" stroke="url(#ring)" stroke-width="7" stroke-linecap="round"
+    stroke-dasharray="320 427" stroke-dashoffset="-40"/>
+  <text x="96" y="76" text-anchor="middle" font-family="Georgia, serif" font-weight="700"
+    font-size="36" fill="#00D4AA" letter-spacing="-1">Nutri</text>
+  <text x="96" y="116" text-anchor="middle" font-family="Georgia, serif" font-weight="300"
+    font-size="36" fill="#34E0BC" letter-spacing="2">Track</text>
+  <circle cx="96" cy="140" r="3" fill="#00D4AA" opacity="0.6"/>
+</svg>

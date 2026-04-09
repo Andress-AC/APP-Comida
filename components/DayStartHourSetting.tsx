@@ -24,16 +24,16 @@ export default function DayStartHourSetting({ currentHour }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg border p-4 space-y-2">
-      <h3 className="font-medium text-sm">Inicio del día</h3>
-      <p className="text-xs text-gray-500">
+    <div className="glass-card p-4 space-y-2">
+      <h3 className="font-medium text-sm text-white/80">Inicio del día</h3>
+      <p className="text-xs text-white/40">
         Si comes después de medianoche, se cuenta como el día anterior hasta esta hora.
       </p>
       <div className="flex items-center gap-3">
         <select
           value={hour}
           onChange={(e) => setHour(Number(e.target.value))}
-          className="rounded border px-2 py-1 text-sm"
+          className="input-dark !py-1 !px-2"
         >
           {Array.from({ length: 13 }, (_, i) => (
             <option key={i} value={i}>
@@ -44,11 +44,11 @@ export default function DayStartHourSetting({ currentHour }: Props) {
         <button
           onClick={handleSave}
           disabled={saving || hour === currentHour}
-          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+          className="btn-primary !py-1"
         >
           {saving ? "..." : "Guardar"}
         </button>
-        {saved && <span className="text-green-600 text-xs">Guardado</span>}
+        {saved && <span className="text-emerald-400 text-xs">Guardado</span>}
       </div>
     </div>
   );

@@ -32,17 +32,17 @@ export default function RecipeCategorySelect({ recipeId, initial, onChange }: Pr
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-600">Categorías</label>
+      <label className="text-sm font-medium text-white/50 uppercase tracking-wider">Categorías</label>
       <div className="flex flex-wrap gap-2">
         {MEAL_CATEGORIES.map((cat) => (
           <button
             key={cat.value}
             type="button"
             onClick={() => toggle(cat.value)}
-            className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+            className={`px-3 py-1 rounded-full text-sm border transition-all duration-200 ${
               selected.includes(cat.value)
-                ? "bg-blue-600 text-white border-blue-600"
-                : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                ? "bg-amber-500 text-black font-medium border-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.3)]"
+                : "bg-white/[0.03] text-white/50 border-white/10 hover:border-amber-500/40 hover:text-white/70"
             }`}
           >
             {cat.label}
@@ -53,7 +53,7 @@ export default function RecipeCategorySelect({ recipeId, initial, onChange }: Pr
         <button
           onClick={handleSave}
           disabled={saving}
-          className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="btn-primary"
         >
           {saving ? "..." : "Guardar categorías"}
         </button>

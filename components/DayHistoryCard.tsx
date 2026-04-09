@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MacroTotals, MACRO_LABELS, MACRO_UNITS } from "@/lib/types";
 import { GoalStatus } from "@/lib/goals";
+import CopyDayButton from "./CopyDayButton";
 
 interface Props {
   date: string;
@@ -27,37 +28,38 @@ export default function DayHistoryCard({ date, totals, goalStatuses, hasNote, ca
   return (
     <Link
       href={`/historial/${date}`}
-      className="block bg-white rounded-lg border p-4 hover:shadow-md transition-shadow"
+      className="block glass-card p-4 hover:border-amber-500/40 transition-all duration-300"
     >
       <div className="flex items-center justify-between mb-2">
         <div>
-          <span className="font-medium capitalize">{dayName}</span>
-          <span className="text-gray-500 text-sm ml-2">{dateFormatted}</span>
+          <span className="font-medium text-white/90 capitalize">{dayName}</span>
+          <span className="text-white/40 text-sm ml-2">{dateFormatted}</span>
         </div>
-        {hasGoals && (
-          <span className="text-lg">{allMet ? "✅" : "❌"}</span>
-        )}
+        <div className="flex items-center gap-2">
+          <CopyDayButton date={date} />
+          {hasGoals && (
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${allMet ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"}`}>
+              {allMet ? "Cumplido" : "Pendiente"}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
         {goalStatuses.map((status) => (
           <div key={status.macro} className="flex items-center gap-1">
-            <span>{MACRO_LABELS[status.macro]}:</span>
-            <span className="font-medium">
+            <span className="text-white/50">{MACRO_LABELS[status.macro]}:</span>
+            <span className="font-medium text-white/80">
               {status.actual}{MACRO_UNITS[status.macro]}
             </span>
-            {status.met ? (
-              <span className="text-xs">✅</span>
-            ) : (
-              <span className="text-xs">❌</span>
-            )}
+            <span className={`w-1.5 h-1.5 rounded-full ${status.met ? "bg-emerald-400" : "bg-red-400"}`} />
             <span
               className={`text-xs ${
                 status.severity === "good"
-                  ? "text-green-600"
+                  ? "text-emerald-400"
                   : status.severity === "bad"
-                  ? "text-red-600"
-                  : "text-gray-400"
+                  ? "text-red-400"
+                  : "text-white/30"
               }`}
             >
               ({status.difference > 0 ? "+" : ""}
@@ -71,22 +73,22 @@ export default function DayHistoryCard({ date, totals, goalStatuses, hasNote, ca
         const target = kcalStatus.goalType === "max" ? kcalStatus.target.max! : kcalStatus.target.min!;
         const diff = netKcal - target;
         const pct = target > 0 ? (diff / target) * 100 : 0;
-        const color = pct > 10 ? "text-green-600" : pct < -10 ? "text-red-600" : "text-gray-400";
+        const color = pct > 10 ? "text-emerald-400" : pct < -10 ? "text-red-400" : "text-white/30";
         return (
-          <p className="text-xs mt-1">
-            <span className="text-gray-500">Balance neto: {netKcal} kcal </span>
-            <span className={`font-medium ${color}`}>({diff > 0 ? "+" : ""}{Math.round(diff)})</span>
+          <p className="text-xs mt-2">
+            <span className="text-white/40">Balance neto: {netKcal} kcal </span>
+            <span className={`font-semibold ${color}`}>({diff > 0 ? "+" : ""}{Math.round(diff)})</span>
           </p>
         );
       })()}
 
       {!hasGoals && (
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-white/30">
           {totals.kcal} kcal — sin objetivos configurados
         </p>
       )}
       {hasNote && (
-        <p className="text-xs text-gray-400 mt-1 italic">Tiene nota</p>
+        <p className="text-xs text-amber-500/50 mt-1 italic">Tiene nota</p>
       )}
     </Link>
   );

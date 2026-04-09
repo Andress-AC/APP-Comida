@@ -10,6 +10,10 @@ import AiInput from "@/components/AiInput";
 import AiRecommendation from "@/components/AiRecommendation";
 import DailyNoteEditor from "@/components/DailyNoteEditor";
 import ExerciseSection from "@/components/ExerciseSection";
+import TemplateSection from "@/components/TemplateSection";
+import ShareDayButton from "@/components/ShareDayButton";
+import { getFavorites } from "@/actions/favorites";
+import { getTemplates } from "@/actions/templates";
 
 export default async function HoyPage() {
   const supabase = await createClient();
@@ -24,7 +28,7 @@ export default async function HoyPage() {
   const dayStartHour = profile?.day_start_hour ?? 5;
   const today = getEffectiveDateStr(dayStartHour);
 
-  const [logsResult, goalsResult, overridesResult, foodsResult, recipesResult, noteResult, exerciseResult] =
+  const [logsResult, goalsResult, overridesResult, foodsResult, recipesResult, noteResult, exerciseResult, favs, templates] =
     await Promise.all([
       supabase
         .from("daily_logs")
@@ -61,6 +65,8 @@ export default async function HoyPage() {
         .eq("user_id", user!.id)
         .eq("date", today)
         .order("created_at"),
+      getFavorites(),
+      getTemplates(),
     ]);
 
   const logs = (logsResult.data ?? []) as DailyLog[];
@@ -77,7 +83,16 @@ export default async function HoyPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">Hoy</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="heading-display text-2xl">Hoy</h1>
+        {logs.length > 0 && (
+          <ShareDayButton
+            date={today}
+            dateLabel={new Date(today + "T12:00:00").toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+            totals={totals}
+          />
+        )}
+      </div>
 
       <MacroDashboard totals={totals} effectiveGoals={effectiveGoals} caloriesBurned={caloriesBurned} />
 
@@ -85,20 +100,24 @@ export default async function HoyPage() {
 
       <AiInput />
 
+      <TemplateSection templates={templates} hasLogsToday={logs.length > 0} />
+
       <ManualLogForm
         foods={(foodsResult.data ?? []) as FoodWithUnits[]}
         recipes={(recipesResult.data ?? []) as RecipeWithIngredients[]}
+        favoriteFoodIds={favs.foodIds}
+        favoriteRecipeIds={favs.recipeIds}
       />
 
       <div className="space-y-2">
-        <h2 className="font-semibold text-sm text-gray-600">
+        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">
           Registros de hoy ({logs.length})
         </h2>
         {logs.map((log) => (
           <LogEntry key={log.id} log={log} />
         ))}
         {logs.length === 0 && (
-          <p className="text-gray-400 text-center py-4 text-sm">
+          <p className="text-white/30 text-center py-4 text-sm">
             No has registrado nada todavía
           </p>
         )}

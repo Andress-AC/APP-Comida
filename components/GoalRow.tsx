@@ -43,23 +43,23 @@ export default function GoalRow({ macro, dayOfWeek, existing }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg border p-3 space-y-2">
+    <div className="glass-card p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <span className="font-medium text-sm">{MACRO_LABELS[macro]}</span>
+        <span className="font-medium text-sm text-white/80">{MACRO_LABELS[macro]}</span>
         {existing && (
           <button
             onClick={handleRemove}
-            className="text-red-500 text-xs hover:underline"
+            className="text-red-400/60 text-xs hover:text-red-400 transition-colors"
           >
             Quitar
           </button>
         )}
       </div>
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-center flex-wrap">
         <select
           value={goalType}
           onChange={(e) => setGoalType(e.target.value as GoalType)}
-          className="rounded border px-2 py-1 text-sm"
+          className="input-dark !py-1 !px-2"
         >
           <option value="min">Mínimo</option>
           <option value="max">Máximo</option>
@@ -72,7 +72,7 @@ export default function GoalRow({ macro, dayOfWeek, existing }: Props) {
             placeholder={`Mín (${unit})`}
             value={valueMin}
             onChange={(e) => setValueMin(e.target.value)}
-            className="w-24 rounded border px-2 py-1 text-sm"
+            className="input-dark w-24 !py-1 !px-2"
           />
         )}
         {goalType !== "min" && (
@@ -81,14 +81,14 @@ export default function GoalRow({ macro, dayOfWeek, existing }: Props) {
             placeholder={`Máx (${unit})`}
             value={valueMax}
             onChange={(e) => setValueMax(e.target.value)}
-            className="w-24 rounded border px-2 py-1 text-sm"
+            className="input-dark w-24 !py-1 !px-2"
           />
         )}
 
         <button
           onClick={handleSave}
           disabled={saving}
-          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
+          className="btn-primary !py-1"
         >
           {saving ? "..." : existing ? "Actualizar" : "Guardar"}
         </button>

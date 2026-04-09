@@ -3,6 +3,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+function storeFromBrand(brand: string): string | null {
+  if (brand === "Mercadona" || brand === "Hacendado") return "mercadona";
+  if (brand === "Consum") return "consum";
+  return null;
+}
+
 export async function getFoods(search?: string) {
   const supabase = await createClient();
   let query = supabase
@@ -63,10 +69,14 @@ export async function createFood(formData: FormData) {
   const imageFile = formData.get("image") as File;
   const imageUrl = await uploadImage(imageFile, user.id);
 
+  const brand = (formData.get("brand") as string) || "Mercadona";
+
   const { error } = await supabase.from("foods").insert({
     name: formData.get("name") as string,
-    brand: (formData.get("brand") as string) || "Mercadona",
+    brand,
     image_url: imageUrl,
+    category: (formData.get("category") as string) || null,
+    store: storeFromBrand(brand),
     kcal: Number(formData.get("kcal")),
     protein: Number(formData.get("protein") || 0),
     fat: Number(formData.get("fat") || 0),
@@ -87,11 +97,15 @@ export async function createFood(formData: FormData) {
 export async function updateFood(id: string, formData: FormData) {
   const supabase = await createClient();
 
+  const brand = (formData.get("brand") as string) || "Mercadona";
+
   const { error } = await supabase
     .from("foods")
     .update({
       name: formData.get("name") as string,
-      brand: (formData.get("brand") as string) || "Mercadona",
+      brand,
+      category: (formData.get("category") as string) || null,
+      store: storeFromBrand(brand),
       kcal: Number(formData.get("kcal")),
       protein: Number(formData.get("protein") || 0),
       fat: Number(formData.get("fat") || 0),
@@ -111,8 +125,69 @@ export async function updateFood(id: string, formData: FormData) {
 
 export async function deleteFood(id: string) {
   const supabase = await createClient();
-  const { error } = await supabase.from("foods").delete().eq("id", id);
-  if (error) return { error: error.message };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const [{ data: food }, { data: profile }] = await Promise.all([
+    supabase.from("foods").select("created_by, is_global").eq("id", id).single(),
+    supabase.from("profiles").select("is_admin").eq("id", user.id).single(),
+  ]);
+
+  if (!food) return { error: "Alimento no encontrado" };
+
+  const isAdmin = profile?.is_admin ?? false;
+  const isOwner = food.created_by === user.id;
+
+  if (isOwner || (isAdmin && food.is_global)) {
+    // Owner or admin deleting global food — hard delete
+    const { error } = await supabase.from("foods").delete().eq("id", id);
+    if (error) return { error: error.message };
+  } else {
+    // Non-owner, non-admin → hide global food for this user only
+    const { error } = await supabase
+      .from("user_hidden_foods")
+      .upsert({ user_id: user.id, food_id: id });
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath("/alimentos");
+  return { success: true };
+}
+
+export async function cloneAndEditFood(id: string, formData: FormData) {
+  // For global foods: clone as personal copy, hide the original
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const imageFile = formData.get("image") as File;
+  const imageUrl = imageFile?.size > 0 ? await uploadImage(imageFile, user.id) : null;
+
+  const brand = (formData.get("brand") as string) || "Mercadona";
+
+  const { error: insertError } = await supabase.from("foods").insert({
+    name: formData.get("name") as string,
+    brand,
+    image_url: imageUrl,
+    category: (formData.get("category") as string) || null,
+    store: storeFromBrand(brand),
+    kcal: Number(formData.get("kcal")),
+    protein: Number(formData.get("protein") || 0),
+    fat: Number(formData.get("fat") || 0),
+    saturated_fat: Number(formData.get("saturated_fat") || 0),
+    carbs: Number(formData.get("carbs") || 0),
+    sugar: Number(formData.get("sugar") || 0),
+    fiber: Number(formData.get("fiber") || 0),
+    salt: Number(formData.get("salt") || 0),
+    is_global: false,
+    created_by: user.id,
+  });
+
+  if (insertError) return { error: insertError.message };
+
+  // Hide original so user only sees their version
+  await supabase.from("user_hidden_foods").upsert({ user_id: user.id, food_id: id });
+
   revalidatePath("/alimentos");
   return { success: true };
 }
@@ -126,6 +201,48 @@ export async function addFoodUnit(foodId: string, name: string, grams: number) {
   });
   if (error) return { error: error.message };
   revalidatePath(`/alimentos/${foodId}`);
+  return { success: true };
+}
+
+export async function importFoodFromBarcode(food: {
+  name: string;
+  brand: string;
+  kcal: number;
+  protein: number;
+  fat: number;
+  saturated_fat: number;
+  carbs: number;
+  sugar: number;
+  fiber: number;
+  salt: number;
+  image_url: string | null;
+}) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const brand = food.brand || "OpenFoodFacts";
+
+  const { error } = await supabase.from("foods").insert({
+    name: food.name || "Producto escaneado",
+    brand,
+    image_url: food.image_url,
+    category: null,
+    store: storeFromBrand(brand),
+    kcal: food.kcal,
+    protein: food.protein,
+    fat: food.fat,
+    saturated_fat: food.saturated_fat,
+    carbs: food.carbs,
+    sugar: food.sugar,
+    fiber: food.fiber,
+    salt: food.salt,
+    is_global: false,
+    created_by: user.id,
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath("/alimentos");
   return { success: true };
 }
 

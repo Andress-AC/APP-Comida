@@ -26,9 +26,8 @@ export default function SearchInput({ basePath }: { basePath: string }) {
       placeholder="Buscar..."
       defaultValue={searchParams.get("q") ?? ""}
       onChange={(e) => handleSearch(e.target.value)}
-      className={`w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-        isPending ? "opacity-50" : ""
-      }`}
+      className="input-dark w-full"
+      style={{ opacity: isPending ? 0.5 : 1 }}
     />
   );
 }

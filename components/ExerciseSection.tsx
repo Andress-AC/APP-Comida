@@ -38,19 +38,19 @@ export default function ExerciseSection({ date, exercises, currentSteps }: Props
   const activities = exercises.filter((e) => e.description);
 
   return (
-    <div className="bg-white rounded-lg border">
+    <div className="glass-card overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-600"
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-white/60 hover:text-white/80 transition-colors"
       >
         <span>Ejercicio</span>
-        <span className="text-gray-400">{open ? "▲" : "▼"}</span>
+        <span className="text-white/30">{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div className="px-4 pb-4 space-y-4">
+        <div className="px-4 pb-4 space-y-4 border-t border-white/5">
           {/* Steps */}
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-500">Pasos</label>
+          <div className="space-y-1 pt-3">
+            <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Pasos</label>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -58,12 +58,12 @@ export default function ExerciseSection({ date, exercises, currentSteps }: Props
                 value={steps}
                 onChange={(e) => setSteps(e.target.value)}
                 onFocus={(e) => e.target.select()}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-dark flex-1"
               />
               <button
                 onClick={handleSaveSteps}
                 disabled={savingSteps || !steps}
-                className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                className="btn-primary"
               >
                 {savingSteps ? "..." : "Guardar"}
               </button>
@@ -73,18 +73,18 @@ export default function ExerciseSection({ date, exercises, currentSteps }: Props
           {/* Activity list */}
           {activities.length > 0 && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-500">Actividades</label>
+              <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Actividades</label>
               {activities.map((ex) => (
-                <div key={ex.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 text-sm">
+                <div key={ex.id} className="flex items-center justify-between bg-white/[0.03] rounded-xl px-3 py-2 text-sm">
                   <div>
-                    <span>{ex.description}</span>
+                    <span className="text-white/80">{ex.description}</span>
                     {ex.calories_burned && (
-                      <span className="text-xs text-gray-400 ml-2">~{ex.calories_burned} kcal</span>
+                      <span className="text-xs text-amber-500/50 ml-2">~{ex.calories_burned} kcal</span>
                     )}
                   </div>
                   <button
                     onClick={() => deleteExercise(ex.id)}
-                    className="text-red-400 hover:text-red-600 text-sm"
+                    className="text-red-400/60 hover:text-red-400 text-sm transition-colors"
                   >
                     ✕
                   </button>
@@ -95,25 +95,25 @@ export default function ExerciseSection({ date, exercises, currentSteps }: Props
 
           {/* Add activity */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-gray-500">Añadir actividad</label>
+            <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Añadir actividad</label>
             <div className="flex gap-2">
               <input
                 placeholder="Ej: 1h gimnasio — pecho y bíceps"
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-dark flex-1"
               />
               <input
                 type="number"
                 placeholder="kcal"
                 value={cals}
                 onChange={(e) => setCals(e.target.value)}
-                className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="input-dark w-20"
               />
               <button
                 onClick={handleAddExercise}
                 disabled={savingExercise || !desc.trim()}
-                className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
+                className="btn-sage"
               >
                 {savingExercise ? "..." : "+"}
               </button>

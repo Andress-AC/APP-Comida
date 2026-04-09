@@ -67,6 +67,8 @@ export interface Food {
   image_url: string | null;
   is_global: boolean;
   created_by: string;
+  category: string | null;
+  store: string | null;
   kcal: number;
   protein: number;
   fat: number;
@@ -142,6 +144,7 @@ export interface DailyLog {
   multiplier: number;
   meal_type: MealCategory;
   logged_at: string;
+  image_url: string | null;
   food?: Food;
   recipe?: RecipeWithIngredients;
 }
@@ -195,6 +198,30 @@ export interface DailyExercise {
   steps_source: string;
   description: string | null;
   calories_burned: number | null;
+  created_at: string;
+}
+
+export interface UserFavorites {
+  foodIds: Set<string>;
+  recipeIds: Set<string>;
+}
+
+export interface DayTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at: string;
+  day_template_items?: DayTemplateItem[];
+}
+
+export interface DayTemplateItem {
+  id: string;
+  template_id: string;
+  food_id: string | null;
+  recipe_id: string | null;
+  quantity_grams: number | null;
+  multiplier: number;
+  meal_type: MealCategory;
   created_at: string;
 }
 

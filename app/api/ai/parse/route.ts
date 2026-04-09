@@ -68,6 +68,10 @@ TEXTO DEL USUARIO: "${text}"`;
     const parsed = JSON.parse(jsonMatch[0]);
     return NextResponse.json({ items: parsed });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const msg = error.message ?? "";
+    const friendly = msg.includes("429") || msg.includes("quota")
+      ? "Has alcanzado el límite de la IA. Espera unos minutos e inténtalo de nuevo."
+      : "Error al conectar con la IA. Inténtalo de nuevo.";
+    return NextResponse.json({ error: friendly }, { status: 500 });
   }
 }

@@ -13,16 +13,16 @@ export default function FoodUnitsList({ food }: { food: FoodWithUnits }) {
       {food.food_units.map((unit) => (
         <div
           key={unit.id}
-          className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+          className="flex items-center justify-between bg-white/[0.03] rounded-xl px-3 py-2"
         >
-          <span>
+          <span className="text-white/70">
             1 {unit.name} = {unit.grams}g
           </span>
           <button
             onClick={async () => {
               await deleteFoodUnit(unit.id, food.id);
             }}
-            className="text-red-500 text-sm hover:underline"
+            className="text-red-400/60 text-sm hover:text-red-400 transition-colors"
           >
             Eliminar
           </button>
@@ -34,14 +34,14 @@ export default function FoodUnitsList({ food }: { food: FoodWithUnits }) {
           placeholder="Nombre (ej: bolsa)"
           value={unitName}
           onChange={(e) => setUnitName(e.target.value)}
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="input-dark flex-1"
         />
         <input
           placeholder="Gramos"
           type="number"
           value={unitGrams}
           onChange={(e) => setUnitGrams(e.target.value)}
-          className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="input-dark w-24"
         />
         <button
           onClick={async () => {
@@ -51,7 +51,7 @@ export default function FoodUnitsList({ food }: { food: FoodWithUnits }) {
               setUnitGrams("");
             }
           }}
-          className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-blue-700"
+          className="btn-primary"
         >
           Añadir
         </button>
