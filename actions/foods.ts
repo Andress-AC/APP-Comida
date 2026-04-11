@@ -246,6 +246,74 @@ export async function importFoodFromBarcode(food: {
   return { success: true };
 }
 
+export async function bulkDeleteFoods(ids: string[]) {
+  if (!ids.length) return { success: true };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const [{ data: foods }, { data: profile }] = await Promise.all([
+    supabase.from("foods").select("id, created_by, is_global").in("id", ids),
+    supabase.from("profiles").select("is_admin").eq("id", user.id).single(),
+  ]);
+
+  if (!foods) return { error: "Error al obtener alimentos" };
+  const isAdmin = profile?.is_admin ?? false;
+
+  const toDelete: string[] = [];
+  const toHide: string[] = [];
+
+  for (const food of foods) {
+    if (food.created_by === user.id || (isAdmin && food.is_global)) {
+      toDelete.push(food.id);
+    } else {
+      toHide.push(food.id);
+    }
+  }
+
+  const errors: string[] = [];
+
+  if (toDelete.length) {
+    const { error } = await supabase.from("foods").delete().in("id", toDelete);
+    if (error) errors.push(error.message);
+  }
+
+  if (toHide.length) {
+    const { error } = await supabase
+      .from("user_hidden_foods")
+      .upsert(toHide.map((food_id) => ({ user_id: user.id, food_id })));
+    if (error) errors.push(error.message);
+  }
+
+  if (errors.length) return { error: errors.join(", ") };
+  revalidatePath("/alimentos");
+  return { success: true };
+}
+
+export async function bulkUpdateCategory(ids: string[], category: string) {
+  if (!ids.length) return { success: true };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_admin) return { error: "No autorizado" };
+
+  const { error } = await supabase
+    .from("foods")
+    .update({ category: category || null })
+    .in("id", ids);
+
+  if (error) return { error: error.message };
+  revalidatePath("/alimentos");
+  return { success: true };
+}
+
 export async function deleteFoodUnit(unitId: string, foodId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("food_units").delete().eq("id", unitId);

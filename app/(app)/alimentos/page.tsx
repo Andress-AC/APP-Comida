@@ -69,7 +69,7 @@ export default async function AlimentosPage({
         </div>
       </details>
 
-      <AlimentosClient foods={foods} favIds={favIds} />
+      <AlimentosClient foods={foods} favIds={favIds} isAdmin={profile?.is_admin ?? false} />
     </div>
   );
 }
