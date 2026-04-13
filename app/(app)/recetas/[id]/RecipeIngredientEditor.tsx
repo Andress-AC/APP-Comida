@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import FoodSelector, { FoodOption } from "@/components/FoodSelector";
 import { addIngredient, removeIngredient, updateIngredient } from "@/actions/recipes";
 
 interface Ingredient {
@@ -13,7 +14,7 @@ interface Ingredient {
 interface Props {
   recipeId: string;
   ingredients: Ingredient[];
-  availableFoods: { id: string; name: string; brand?: string }[];
+  availableFoods: FoodOption[];
 }
 
 export default function RecipeIngredientEditor({
@@ -21,17 +22,28 @@ export default function RecipeIngredientEditor({
   ingredients,
   availableFoods,
 }: Props) {
-  const [selectedFood, setSelectedFood] = useState("");
+  const [selectedFood, setSelectedFood] = useState<FoodOption | null>(null);
   const [grams, setGrams] = useState("");
+  const [isPending, startTransition] = useTransition();
+
+  function handleAdd() {
+    if (!selectedFood || !grams || Number(grams) <= 0) return;
+    startTransition(async () => {
+      await addIngredient(recipeId, selectedFood.id, Number(grams));
+      setSelectedFood(null);
+      setGrams("");
+    });
+  }
 
   return (
     <div className="space-y-2">
       {ingredients.map((ing) => (
         <div
           key={ing.id}
-          className="flex items-center justify-between bg-white/[0.03] rounded-xl px-3 py-2"
+          className="flex items-center justify-between rounded-xl px-3 py-2"
+          style={{ background: "rgba(255,255,255,0.03)" }}
         >
-          <span className="text-white/70">
+          <span style={{ color: "var(--text-secondary)" }}>
             {ing.food.name} — {ing.quantity_grams}g
           </span>
           <div className="flex gap-2">
@@ -48,7 +60,8 @@ export default function RecipeIngredientEditor({
             />
             <button
               onClick={() => removeIngredient(ing.id, recipeId)}
-              className="text-red-400/60 text-sm hover:text-red-400 transition-colors"
+              className="text-sm transition-colors"
+              style={{ color: "var(--coral)" }}
             >
               Quitar
             </button>
@@ -56,38 +69,35 @@ export default function RecipeIngredientEditor({
         </div>
       ))}
 
-      <div className="flex gap-2">
-        <select
-          value={selectedFood}
-          onChange={(e) => setSelectedFood(e.target.value)}
-          className="input-dark flex-1"
-        >
-          <option value="">Seleccionar alimento...</option>
-          {availableFoods.map((f) => (
-            <option key={f.id} value={f.id}>
-              {f.name}{f.brand ? ` — ${f.brand}` : ""}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          placeholder="g"
-          value={grams}
-          onChange={(e) => setGrams(e.target.value)}
-          className="input-dark w-20"
+      <div className="space-y-2 pt-2 border-t" style={{ borderColor: "var(--border-subtle)" }}>
+        <FoodSelector
+          foods={availableFoods}
+          onSelect={setSelectedFood}
+          placeholder="Buscar ingrediente..."
         />
-        <button
-          onClick={async () => {
-            if (selectedFood && grams) {
-              await addIngredient(recipeId, selectedFood, Number(grams));
-              setSelectedFood("");
-              setGrams("");
-            }
-          }}
-          className="btn-primary"
-        >
-          Añadir
-        </button>
+        {selectedFood && (
+          <p className="text-xs px-2 py-1 rounded-lg" style={{ color: "var(--amber)", background: "var(--amber-glow)" }}>
+            {selectedFood.name}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <input
+            type="number"
+            placeholder="Gramos"
+            value={grams}
+            onChange={(e) => setGrams(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            className="input-dark flex-1"
+          />
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!selectedFood || !grams || isPending}
+            className="btn-primary"
+          >
+            {isPending ? "..." : "Añadir"}
+          </button>
+        </div>
       </div>
     </div>
   );

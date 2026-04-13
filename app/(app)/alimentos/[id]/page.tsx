@@ -2,8 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import FoodForm from "@/components/FoodForm";
 import { updateFood, deleteFood, cloneAndEditFood } from "@/actions/foods";
-import { FoodWithUnits } from "@/lib/types";
-import FoodUnitsList from "./FoodUnitsList";
 import DeleteFoodButton from "@/components/DeleteFoodButton";
 
 export default async function FoodDetailPage({
@@ -55,11 +53,6 @@ export default async function FoodDetailPage({
             }}
             submitLabel="Guardar cambios"
           />
-
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-white/80">Unidades</h2>
-            <FoodUnitsList food={food as FoodWithUnits} />
-          </section>
 
           <DeleteFoodButton
             foodId={id}

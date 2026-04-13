@@ -71,7 +71,7 @@ export async function createFood(formData: FormData) {
 
   const brand = (formData.get("brand") as string) || "Mercadona";
 
-  const { error } = await supabase.from("foods").insert({
+  const { data: newFood, error } = await supabase.from("foods").insert({
     name: formData.get("name") as string,
     brand,
     image_url: imageUrl,
@@ -87,9 +87,23 @@ export async function createFood(formData: FormData) {
     salt: Number(formData.get("salt") || 0),
     is_global: isGlobal,
     created_by: user.id,
-  });
+  }).select().single();
 
   if (error) return { error: error.message };
+
+  // Crear unidades si se definieron en el formulario
+  const unitsJson = formData.get("units_json") as string;
+  if (unitsJson && newFood) {
+    try {
+      const units: { name: string; grams: number }[] = JSON.parse(unitsJson);
+      if (units.length > 0) {
+        await supabase.from("food_units").insert(
+          units.map((u) => ({ food_id: newFood.id, name: u.name, grams: u.grams }))
+        );
+      }
+    } catch { /* ignorar JSON inválido */ }
+  }
+
   revalidatePath("/alimentos");
   return { success: true };
 }
@@ -194,14 +208,14 @@ export async function cloneAndEditFood(id: string, formData: FormData) {
 
 export async function addFoodUnit(foodId: string, name: string, grams: number) {
   const supabase = await createClient();
-  const { error } = await supabase.from("food_units").insert({
+  const { data, error } = await supabase.from("food_units").insert({
     food_id: foodId,
     name,
     grams,
-  });
+  }).select().single();
   if (error) return { error: error.message };
   revalidatePath(`/alimentos/${foodId}`);
-  return { success: true };
+  return { success: true, unit: data };
 }
 
 export async function importFoodFromBarcode(food: {

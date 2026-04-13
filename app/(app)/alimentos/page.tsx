@@ -7,6 +7,7 @@ import LabelScanner from "@/components/LabelScanner";
 import AlimentosClient from "@/components/AlimentosClient";
 import { createFood } from "@/actions/foods";
 import { getFavorites } from "@/actions/favorites";
+import { redirect } from "next/navigation";
 
 export default async function AlimentosPage({
   searchParams,
@@ -28,15 +29,19 @@ export default async function AlimentosPage({
 
   let query = supabase
     .from("foods")
-    .select("*, food_units(*)")
-    .order("name");
+    .select("id, name, brand, kcal, protein, fat, carbs, sugar, fiber, salt, saturated_fat, image_url, category, store, is_global, created_by, created_at")
+    .order("name")
+    .limit(5000);
 
   if (q) {
     query = query.ilike("name", `%${q}%`);
   }
 
   const { data: rawFoods } = await query;
-  const foods = (rawFoods ?? []).filter((f: any) => !hiddenIds.has(f.id)) as FoodWithUnits[];
+  // food_units not needed for list view — cast as FoodWithUnits with empty units
+  const foods = (rawFoods ?? [])
+    .filter((f: any) => !hiddenIds.has(f.id))
+    .map((f: any) => ({ ...f, food_units: [] })) as FoodWithUnits[];
 
   return (
     <div className="space-y-6">
@@ -63,7 +68,12 @@ export default async function AlimentosPage({
         <div className="mt-4 border-t border-white/5 pt-4">
           <FoodForm
             isAdmin={profile?.is_admin}
-            onSubmit={createFood}
+            onSubmit={async (formData) => {
+              "use server";
+              const result = await createFood(formData);
+              if (!result?.error) redirect("/alimentos");
+              return result;
+            }}
             submitLabel="Crear alimento"
           />
         </div>

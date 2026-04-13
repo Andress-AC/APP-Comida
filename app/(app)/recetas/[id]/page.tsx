@@ -24,8 +24,9 @@ export default async function RecipeDetailPage({
 
   const { data: foods } = await supabase
     .from("foods")
-    .select("id, name, brand")
-    .order("name");
+    .select("id, name, brand, category, store")
+    .order("name")
+    .limit(5000);
 
   const macros = calcRecipeMacros(recipe as RecipeWithIngredients);
 
@@ -57,12 +58,18 @@ export default async function RecipeDetailPage({
         initial={(recipe.categories ?? ["comida", "cena"]) as MealCategory[]}
       />
 
-      <div className="glass-card p-4">
-        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-2">Macros totales</h2>
-        <p className="text-lg font-bold text-amber-500">{macros.kcal} kcal</p>
-        <p className="text-sm text-white/50">
-          {macros.protein}g prot · {macros.fat}g grasa · {macros.carbs}g carbs
-        </p>
+      <div className="glass-card p-4 space-y-2">
+        <h2 className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Macros totales</h2>
+        <p className="text-xl font-bold" style={{ color: "var(--amber)" }}>{macros.kcal} kcal</p>
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+          <span style={{ color: "var(--text-secondary)" }}>Proteínas <strong style={{ color: "var(--text-primary)" }}>{macros.protein}g</strong></span>
+          <span style={{ color: "var(--text-secondary)" }}>Grasas <strong style={{ color: "var(--text-primary)" }}>{macros.fat}g</strong></span>
+          <span style={{ color: "var(--text-secondary)" }}>Grasas sat. <strong style={{ color: "var(--text-primary)" }}>{macros.saturated_fat}g</strong></span>
+          <span style={{ color: "var(--text-secondary)" }}>Carbohidratos <strong style={{ color: "var(--text-primary)" }}>{macros.carbs}g</strong></span>
+          <span style={{ color: "var(--text-secondary)" }}>Azúcares <strong style={{ color: "var(--text-primary)" }}>{macros.sugar}g</strong></span>
+          <span style={{ color: "var(--text-secondary)" }}>Fibra <strong style={{ color: "var(--text-primary)" }}>{macros.fiber}g</strong></span>
+          <span style={{ color: "var(--text-secondary)" }}>Sal <strong style={{ color: "var(--text-primary)" }}>{macros.salt}g</strong></span>
+        </div>
       </div>
 
       <section className="space-y-3">

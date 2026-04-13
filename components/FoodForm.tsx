@@ -1,18 +1,24 @@
 "use client";
 
-import { Food } from "@/lib/types";
+import { FoodUnit, FoodWithUnits } from "@/lib/types";
 import { ALL_MACROS, MACRO_LABELS, MACRO_UNITS } from "@/lib/types";
 import { FOOD_CATEGORIES } from "@/lib/categories";
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
+import { addFoodUnit, deleteFoodUnit } from "@/actions/foods";
+
+interface LocalUnit {
+  id: string;
+  name: string;
+  grams: number;
+  persisted: boolean; // true = already in DB
+}
 
 interface Props {
-  food?: Food;
+  food?: FoodWithUnits;
   isAdmin?: boolean;
   onSubmit: (formData: FormData) => Promise<{ error?: string; success?: boolean } | undefined>;
   submitLabel: string;
 }
-
-const BRAND_OPTIONS = ["Mercadona", "Consum", "Otros", "__custom__"] as const;
 
 export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props) {
   const [state, formAction, pending] = useActionState(
@@ -31,6 +37,15 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
 
   const macroRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Units management
+  const isEditMode = !!food?.id;
+  const [units, setUnits] = useState<LocalUnit[]>(
+    (food?.food_units ?? []).map((u) => ({ id: u.id, name: u.name, grams: u.grams, persisted: true }))
+  );
+  const [newUnitName, setNewUnitName] = useState("");
+  const [newUnitGrams, setNewUnitGrams] = useState("");
+  const [unitsPending, startUnitTransition] = useTransition();
+
   function handleMacroKeyDown(e: React.KeyboardEvent<HTMLInputElement>, index: number) {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -45,21 +60,54 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
 
   const effectiveBrand = brandMode === "__custom__" ? customBrand : brandMode;
 
+  function handleAddUnit() {
+    const name = newUnitName.trim();
+    const grams = Number(newUnitGrams);
+    if (!name || !grams) return;
+
+    if (isEditMode && food?.id) {
+      startUnitTransition(async () => {
+        const result = await addFoodUnit(food.id, name, grams);
+        if (!result.error) {
+          const realId = (result as any).unit?.id ?? `tmp-${Date.now()}`;
+          setUnits((prev) => [...prev, { id: realId, name, grams, persisted: true }]);
+          setNewUnitName("");
+          setNewUnitGrams("");
+        }
+      });
+    } else {
+      setUnits((prev) => [...prev, { id: `tmp-${Date.now()}`, name, grams, persisted: false }]);
+      setNewUnitName("");
+      setNewUnitGrams("");
+    }
+  }
+
+  function handleRemoveUnit(unit: LocalUnit) {
+    if (isEditMode && unit.persisted && food?.id) {
+      startUnitTransition(async () => {
+        await deleteFoodUnit(unit.id, food.id);
+        setUnits((prev) => prev.filter((u) => u.id !== unit.id));
+      });
+    } else {
+      setUnits((prev) => prev.filter((u) => u.id !== unit.id));
+    }
+  }
+
   return (
     <form action={formAction} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Nombre</label>
+        <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Nombre</label>
         <input name="name" required defaultValue={food?.name} className="input-dark w-full" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Marca</label>
+        <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Marca</label>
         <div className="flex gap-2">
           <select
             value={brandMode}
             onChange={(e) => setBrandMode(e.target.value)}
             className="input-dark"
-            style={{ width: 'auto' }}
+            style={{ width: "auto" }}
           >
             <option value="Mercadona">Mercadona</option>
             <option value="Consum">Consum</option>
@@ -79,12 +127,8 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Categoría</label>
-        <select
-          name="category"
-          defaultValue={food?.category ?? ""}
-          className="input-dark w-full"
-        >
+        <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Categoría</label>
+        <select name="category" defaultValue={food?.category ?? ""} className="input-dark w-full">
           <option value="">Sin categoría</option>
           {FOOD_CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
@@ -93,14 +137,14 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Imagen (opcional)</label>
-        <input name="image" type="file" accept="image/*" className="text-sm" style={{ color: 'var(--text-muted)' }} />
+        <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Imagen (opcional)</label>
+        <input name="image" type="file" accept="image/*" className="text-sm" style={{ color: "var(--text-muted)" }} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         {ALL_MACROS.map((macro, idx) => (
           <div key={macro}>
-            <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-muted)' }}>
+            <label className="block text-xs font-medium mb-1" style={{ color: "var(--text-muted)" }}>
               {MACRO_LABELS[macro]} ({MACRO_UNITS[macro]}/100g)
             </label>
             <input
@@ -119,14 +163,89 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
         ))}
       </div>
 
+      {/* Units section */}
+      <div>
+        <label className="block text-sm font-medium mb-2" style={{ color: "var(--text-secondary)" }}>
+          Unidades de medida
+        </label>
+        <div className="space-y-2">
+          {units.map((unit) => (
+            <div
+              key={unit.id}
+              className="flex items-center justify-between rounded-xl px-3 py-2"
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border-subtle)" }}
+            >
+              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+                1 {unit.name} = {unit.grams}g
+              </span>
+              <button
+                type="button"
+                onClick={() => handleRemoveUnit(unit)}
+                disabled={unitsPending}
+                className="text-xs transition-colors"
+                style={{ color: "var(--coral)" }}
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Nombre (ej: ración)"
+              value={newUnitName}
+              onChange={(e) => setNewUnitName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddUnit())}
+              className="input-dark flex-1"
+            />
+            <input
+              type="number"
+              placeholder="g"
+              value={newUnitGrams}
+              onChange={(e) => setNewUnitGrams(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddUnit())}
+              className="input-dark w-20"
+            />
+            <button
+              type="button"
+              onClick={handleAddUnit}
+              disabled={unitsPending || !newUnitName.trim() || !newUnitGrams}
+              className="btn-primary px-3"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        {/* Serialize units for create mode */}
+        {!isEditMode && (
+          <input
+            type="hidden"
+            name="units_json"
+            value={JSON.stringify(units.map((u) => ({ name: u.name, grams: u.grams })))}
+          />
+        )}
+      </div>
+
       {isAdmin && (
         <label className="flex items-center gap-2 cursor-pointer">
-          <input name="is_global" type="checkbox" value="true" defaultChecked={food?.is_global} className="accent-amber-500" />
-          <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Alimento global (visible para todos)</span>
+          <input
+            name="is_global"
+            type="checkbox"
+            value="true"
+            defaultChecked={food?.is_global}
+            className="accent-amber-500"
+          />
+          <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Alimento global (visible para todos)
+          </span>
         </label>
       )}
 
-      {state?.error && <p className="text-sm" style={{ color: 'var(--coral)' }}>{state.error}</p>}
+      {state?.error && (
+        <p className="text-sm" style={{ color: "var(--coral)" }}>{state.error}</p>
+      )}
 
       <button type="submit" disabled={pending} className="btn-primary w-full">
         {pending ? "Guardando..." : submitLabel}
