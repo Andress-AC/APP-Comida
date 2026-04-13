@@ -5,6 +5,7 @@ import { ALL_MACROS, MACRO_LABELS, MACRO_UNITS } from "@/lib/types";
 import { FOOD_CATEGORIES, SUBCATEGORIES } from "@/lib/categories";
 import { useActionState, useRef, useState, useTransition } from "react";
 import { addFoodUnit, deleteFoodUnit } from "@/actions/foods";
+import ImagePicker from "@/components/ImagePicker";
 
 interface LocalUnit {
   id: string;
@@ -156,10 +157,7 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Imagen (opcional)</label>
-        <input name="image" type="file" accept="image/*" className="text-sm" style={{ color: "var(--text-muted)" }} />
-      </div>
+      <ImagePicker existingUrl={food?.image_url ?? null} />
 
       <div className="grid grid-cols-2 gap-3">
         {ALL_MACROS.map((macro, idx) => (

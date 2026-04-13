@@ -53,6 +53,37 @@ async function uploadImage(file: File, userId: string): Promise<string | null> {
   return data.publicUrl;
 }
 
+/** Upload from file input, data URL (paste/camera), or reuse existing URL */
+async function resolveImage(formData: FormData, userId: string): Promise<string | null> {
+  // 1. File input (traditional)
+  const imageFile = formData.get("image") as File | null;
+  if (imageFile && imageFile.size > 0) return uploadImage(imageFile, userId);
+
+  // 2. Data URL from paste or camera capture
+  const dataUrl = formData.get("image_data_url") as string | null;
+  if (dataUrl && dataUrl.startsWith("data:image/")) {
+    const supabase = await createClient();
+    const matches = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (!matches) return null;
+    const [, mimeType, base64] = matches;
+    const ext = mimeType.split("/")[1] ?? "jpg";
+    const buffer = Buffer.from(base64, "base64");
+    const path = `${userId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("images")
+      .upload(path, buffer, { contentType: mimeType });
+    if (error) return null;
+    const { data } = supabase.storage.from("images").getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  // 3. Keep existing URL (edit mode, image unchanged)
+  const existingUrl = formData.get("image_existing_url") as string | null;
+  if (existingUrl) return existingUrl;
+
+  return null;
+}
+
 export async function createFood(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -66,8 +97,7 @@ export async function createFood(formData: FormData) {
 
   const isGlobal = profile?.is_admin && formData.get("is_global") === "true";
 
-  const imageFile = formData.get("image") as File;
-  const imageUrl = await uploadImage(imageFile, user.id);
+  const imageUrl = await resolveImage(formData, user.id);
 
   const brand = (formData.get("brand") as string) || "Mercadona";
 
@@ -111,26 +141,32 @@ export async function createFood(formData: FormData) {
 
 export async function updateFood(id: string, formData: FormData) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
 
   const brand = (formData.get("brand") as string) || "Mercadona";
+  const imageUrl = await resolveImage(formData, user.id);
+
+  const updateData: Record<string, unknown> = {
+    name: formData.get("name") as string,
+    brand,
+    category: (formData.get("category") as string) || null,
+    subcategory: (formData.get("subcategory") as string) || null,
+    store: storeFromBrand(brand),
+    kcal: Number(formData.get("kcal")),
+    protein: Number(formData.get("protein") || 0),
+    fat: Number(formData.get("fat") || 0),
+    saturated_fat: Number(formData.get("saturated_fat") || 0),
+    carbs: Number(formData.get("carbs") || 0),
+    sugar: Number(formData.get("sugar") || 0),
+    fiber: Number(formData.get("fiber") || 0),
+    salt: Number(formData.get("salt") || 0),
+  };
+  if (imageUrl !== null) updateData.image_url = imageUrl;
 
   const { error } = await supabase
     .from("foods")
-    .update({
-      name: formData.get("name") as string,
-      brand,
-      category: (formData.get("category") as string) || null,
-      subcategory: (formData.get("subcategory") as string) || null,
-      store: storeFromBrand(brand),
-      kcal: Number(formData.get("kcal")),
-      protein: Number(formData.get("protein") || 0),
-      fat: Number(formData.get("fat") || 0),
-      saturated_fat: Number(formData.get("saturated_fat") || 0),
-      carbs: Number(formData.get("carbs") || 0),
-      sugar: Number(formData.get("sugar") || 0),
-      fiber: Number(formData.get("fiber") || 0),
-      salt: Number(formData.get("salt") || 0),
-    })
+    .update(updateData)
     .eq("id", id);
 
   if (error) return { error: error.message };
