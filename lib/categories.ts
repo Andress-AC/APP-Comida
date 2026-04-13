@@ -26,3 +26,27 @@ export type FoodCategory = (typeof FOOD_CATEGORIES)[number];
 export const CATEGORY_ORDER: Record<string, number> = Object.fromEntries(
   FOOD_CATEGORIES.map((cat, i) => [cat, i])
 );
+
+/** Subcategorías disponibles por categoría (solo las que las tienen) */
+export const SUBCATEGORIES: Partial<Record<FoodCategory, string[]>> = {
+  "Carnes y aves": [
+    "Arreglos",
+    "Aves y pollo",
+    "Cerdo",
+    "Conejo y cordero",
+    "Embutido",
+    "Hamburguesas y picadas",
+    "Vacuno",
+    "Empanados y elaborados",
+  ],
+  "Congelados": [
+    "Arroz y pasta",
+    "Carne",
+    "Marisco",
+    "Pescado",
+    "Pizzas",
+    "Rebozados",
+    "Tartas y churros",
+    "Verdura",
+  ],
+};

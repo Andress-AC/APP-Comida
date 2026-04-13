@@ -2,7 +2,7 @@
 
 import { FoodUnit, FoodWithUnits } from "@/lib/types";
 import { ALL_MACROS, MACRO_LABELS, MACRO_UNITS } from "@/lib/types";
-import { FOOD_CATEGORIES } from "@/lib/categories";
+import { FOOD_CATEGORIES, SUBCATEGORIES } from "@/lib/categories";
 import { useActionState, useRef, useState, useTransition } from "react";
 import { addFoodUnit, deleteFoodUnit } from "@/actions/foods";
 
@@ -29,6 +29,9 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
     },
     null
   );
+
+  const [selectedCategory, setSelectedCategory] = useState(food?.category ?? "");
+  const subcategoryOptions = SUBCATEGORIES[selectedCategory as keyof typeof SUBCATEGORIES] ?? null;
 
   const initialBrand = food?.brand ?? "Mercadona";
   const isPreset = ["Mercadona", "Consum", "Otros"].includes(initialBrand);
@@ -128,13 +131,30 @@ export default function FoodForm({ food, isAdmin, onSubmit, submitLabel }: Props
 
       <div>
         <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Categoría</label>
-        <select name="category" defaultValue={food?.category ?? ""} className="input-dark w-full">
+        <select
+          name="category"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+          className="input-dark w-full"
+        >
           <option value="">Sin categoría</option>
           {FOOD_CATEGORIES.map((cat) => (
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
       </div>
+
+      {subcategoryOptions && (
+        <div>
+          <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Subcategoría</label>
+          <select name="subcategory" defaultValue={food?.subcategory ?? ""} className="input-dark w-full">
+            <option value="">Sin subcategoría</option>
+            {subcategoryOptions.map((sub) => (
+              <option key={sub} value={sub}>{sub}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>Imagen (opcional)</label>

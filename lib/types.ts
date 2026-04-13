@@ -68,6 +68,7 @@ export interface Food {
   is_global: boolean;
   created_by: string;
   category: string | null;
+  subcategory: string | null;
   store: string | null;
   kcal: number;
   protein: number;
