@@ -4,7 +4,9 @@ import { useMemo, useState, useTransition } from "react";
 import { FoodWithUnits } from "@/lib/types";
 import { FOOD_CATEGORIES, CATEGORY_ORDER, SUBCATEGORIES } from "@/lib/categories";
 import FoodCard from "@/components/FoodCard";
+import FoodListButton, { UserList } from "@/components/FoodListButton";
 import { bulkDeleteFoods, bulkUpdateCategory } from "@/actions/foods";
+import { createList, deleteList } from "@/actions/food-lists";
 
 type Store = "mercadona" | "consum" | "otros";
 
@@ -12,6 +14,7 @@ interface Props {
   foods: FoodWithUnits[];
   favIds: string[];
   isAdmin?: boolean;
+  lists: UserList[];
 }
 
 const STORE_LABELS: Record<Store, string> = {
@@ -49,7 +52,7 @@ function similarity(a: string, b: string): number {
   return (2 * overlap) / (ab.length + bb.size);
 }
 
-export default function AlimentosClient({ foods, favIds, isAdmin = false }: Props) {
+export default function AlimentosClient({ foods, favIds, isAdmin = false, lists }: Props) {
   const favSet = useMemo(() => new Set(favIds), [favIds]);
 
   const [search, setSearch] = useState("");
@@ -67,6 +70,12 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false }: Prop
   const [bulkCategory, setBulkCategory] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  // List management
+  const [newListName, setNewListName] = useState("");
+  const [showNewListInput, setShowNewListInput] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [listPending, startListTransition] = useTransition();
 
   function toggleStore(store: Store) {
     setActiveStores((prev) => {
@@ -105,6 +114,22 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false }: Prop
     setConfirmDelete(false);
     setBulkCategory("");
     setError(null);
+  }
+
+  function handleCreateList() {
+    const name = newListName.trim();
+    if (!name) return;
+    startListTransition(async () => {
+      const result = await createList(name);
+      if (result.error) setListError(result.error);
+      else { setNewListName(""); setShowNewListInput(false); setListError(null); }
+    });
+  }
+
+  function handleDeleteList(listId: string) {
+    startListTransition(async () => {
+      await deleteList(listId);
+    });
   }
 
   function handleBulkDelete() {
@@ -366,10 +391,104 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false }: Prop
           {!collapsedCats.has("__favs__") && (
             <div className="space-y-2">
               {favorites.map((food) => (
-                <FoodCard key={`fav-${food.id}`} food={food} isFavorite selectable={selectionMode} selected={selectedIds.has(food.id)} onToggle={() => toggleSelection(food.id)} />
+                <FoodCard key={`fav-${food.id}`} food={food} isFavorite selectable={selectionMode} selected={selectedIds.has(food.id)} onToggle={() => toggleSelection(food.id)}
+                  listButton={<FoodListButton foodId={food.id} lists={lists} />}
+                />
               ))}
             </div>
           )}
+        </section>
+      )}
+
+      {/* User lists */}
+      {!categoryFilter && (
+        <section>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              📂 Mis listas
+            </span>
+            <button
+              onClick={() => { setShowNewListInput((v) => !v); setListError(null); }}
+              className="text-xs px-2 py-1 rounded-lg transition-colors"
+              style={{ color: "var(--amber)", background: "var(--amber-glow)", border: "1px solid var(--border-warm)" }}
+            >
+              + Nueva lista
+            </button>
+          </div>
+
+          {showNewListInput && (
+            <div className="flex gap-2 mb-3">
+              <input
+                type="text"
+                value={newListName}
+                onChange={(e) => setNewListName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleCreateList())}
+                placeholder="Nombre de la lista…"
+                className="input-dark flex-1"
+                autoFocus
+              />
+              <button
+                onClick={handleCreateList}
+                disabled={listPending || !newListName.trim()}
+                className="btn-primary px-3"
+              >
+                {listPending ? "…" : "Crear"}
+              </button>
+            </div>
+          )}
+          {listError && <p className="text-xs mb-2" style={{ color: "var(--coral)" }}>{listError}</p>}
+
+          {lists.length === 0 && !showNewListInput && (
+            <p className="text-sm" style={{ color: "var(--text-muted)" }}>Sin listas creadas</p>
+          )}
+
+          {lists.map((list) => {
+            const listFoods = filtered.filter((f) => list.foodIds.has(f.id));
+            const key = `list-${list.id}`;
+            return (
+              <div key={list.id} className="mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <button
+                    onClick={() => toggleCat(key)}
+                    className="flex items-center gap-1.5 flex-1 min-w-0"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                      className="transition-transform duration-200 flex-shrink-0"
+                      style={{ color: "var(--text-muted)", transform: collapsedCats.has(key) ? "rotate(-90deg)" : "rotate(0deg)" }}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                    <span className="text-xs font-semibold uppercase tracking-wider truncate" style={{ color: "var(--text-muted)" }}>
+                      {list.name} ({listFoods.length})
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteList(list.id)}
+                    disabled={listPending}
+                    className="w-6 h-6 flex items-center justify-center rounded-lg text-xs transition-colors flex-shrink-0"
+                    style={{ color: "var(--text-muted)" }}
+                    title="Eliminar lista"
+                  >
+                    ×
+                  </button>
+                </div>
+                {!collapsedCats.has(key) && (
+                  <div className="space-y-2 pl-2" style={{ borderLeft: "2px solid var(--border-subtle)" }}>
+                    {listFoods.length === 0 ? (
+                      <p className="text-sm py-1" style={{ color: "var(--text-muted)" }}>Sin alimentos en esta lista</p>
+                    ) : (
+                      listFoods.map((food) => (
+                        <FoodCard key={food.id} food={food} isFavorite={favSet.has(food.id)}
+                          selectable={selectionMode} selected={selectedIds.has(food.id)} onToggle={() => toggleSelection(food.id)}
+                          listButton={<FoodListButton foodId={food.id} lists={lists} />}
+                        />
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </section>
       )}
 
@@ -394,7 +513,9 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false }: Prop
           {!collapsedCats.has(category) && (
             <div className="space-y-2">
               {catFoods.map((food) => (
-                <FoodCard key={food.id} food={food} isFavorite={favSet.has(food.id)} selectable={selectionMode} selected={selectedIds.has(food.id)} onToggle={() => toggleSelection(food.id)} />
+                <FoodCard key={food.id} food={food} isFavorite={favSet.has(food.id)} selectable={selectionMode} selected={selectedIds.has(food.id)} onToggle={() => toggleSelection(food.id)}
+                  listButton={<FoodListButton foodId={food.id} lists={lists} />}
+                />
               ))}
             </div>
           )}

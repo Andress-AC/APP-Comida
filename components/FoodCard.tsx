@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FoodWithUnits } from "@/lib/types";
 import FavoriteButton from "./FavoriteButton";
+import { ReactNode } from "react";
 
 interface Props {
   food: FoodWithUnits;
@@ -8,6 +9,7 @@ interface Props {
   selectable?: boolean;
   selected?: boolean;
   onToggle?: () => void;
+  listButton?: ReactNode;
 }
 
 export default function FoodCard({
@@ -55,7 +57,12 @@ export default function FoodCard({
           {food.kcal} kcal · {food.protein}g prot · {food.fat}g grasa · {food.carbs}g carbs
         </p>
       </div>
-      {!selectable && <FavoriteButton id={food.id} type="food" initialFavorite={isFavorite} />}
+      {!selectable && (
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {listButton}
+          <FavoriteButton id={food.id} type="food" initialFavorite={isFavorite} />
+        </div>
+      )}
     </div>
   );
 

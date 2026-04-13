@@ -6,16 +6,18 @@ import LabelScanner from "@/components/LabelScanner";
 import AlimentosClient from "@/components/AlimentosClient";
 import { createFood } from "@/actions/foods";
 import { getFavorites } from "@/actions/favorites";
+import { getUserLists } from "@/actions/food-lists";
 import { redirect } from "next/navigation";
 
 export default async function AlimentosPage() {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  const [profileResult, favsResult, hiddenResult] = await Promise.all([
+  const [profileResult, favsResult, hiddenResult, lists] = await Promise.all([
     supabase.from("profiles").select("is_admin").eq("id", user!.id).single(),
     getFavorites(),
     supabase.from("user_hidden_foods").select("food_id").eq("user_id", user!.id),
+    getUserLists(),
   ]);
   const profile = profileResult.data;
   const favIds = Array.from(favsResult.foodIds);
@@ -65,7 +67,7 @@ export default async function AlimentosPage() {
         </div>
       </details>
 
-      <AlimentosClient foods={foods} favIds={favIds} isAdmin={profile?.is_admin ?? false} />
+      <AlimentosClient foods={foods} favIds={favIds} isAdmin={profile?.is_admin ?? false} lists={lists} />
     </div>
   );
 }
