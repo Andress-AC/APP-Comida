@@ -1,18 +1,18 @@
-import { SupabaseClient } from "@supabase/supabase-js";
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const PAGE_SIZE = 1000;
 
 /**
  * Fetches all rows from a table using pagination to bypass
  * PostgREST's default 1000-row limit.
  */
-export async function fetchAllRows<T = Record<string, unknown>>(
-  supabase: SupabaseClient,
+export async function fetchAllRows(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any,
   table: string,
   columns: string,
   orderBy = "name"
-): Promise<T[]> {
-  const all: T[] = [];
+): Promise<any[]> {
+  const all: any[] = [];
   let from = 0;
 
   while (true) {
@@ -23,7 +23,7 @@ export async function fetchAllRows<T = Record<string, unknown>>(
       .range(from, from + PAGE_SIZE - 1);
 
     if (!data || data.length === 0) break;
-    all.push(...(data as T[]));
+    all.push(...data);
     if (data.length < PAGE_SIZE) break;
     from += PAGE_SIZE;
   }
