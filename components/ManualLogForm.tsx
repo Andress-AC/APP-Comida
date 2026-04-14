@@ -153,7 +153,7 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
           className="input-dark flex-1"
           min={0}
         />
-        {type === "food" && selectedFood?.food_units.length > 0 && (
+        {type === "food" && (selectedFood?.food_units?.length ?? 0) > 0 && (
           <select
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
