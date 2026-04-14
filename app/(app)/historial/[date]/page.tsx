@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { DailyLog, DailyExercise, MEAL_CATEGORY_LABELS, MealCategory } from "@/lib/types";
-import { calcDayTotals, calcLogMacros } from "@/lib/macros";
+import { DailyLog, DailyExercise, MealCategory } from "@/lib/types";
+import { calcDayTotals } from "@/lib/macros";
 import { getEffectiveGoals, evaluateGoals } from "@/lib/goals";
 import { MACRO_LABELS, MACRO_UNITS, ALL_MACROS } from "@/lib/types";
 import ShareDayButton from "@/components/ShareDayButton";
+import LogEntry from "@/components/LogEntry";
 
 export default async function DayDetailPage({
   params,
@@ -17,7 +18,7 @@ export default async function DayDetailPage({
   const [logsRes, goalsRes, overridesRes, noteRes, exerciseRes] = await Promise.all([
     supabase
       .from("daily_logs")
-      .select("*, food:foods(*), recipe:recipes(*, recipe_ingredients(*, food:foods(*)))")
+      .select("*, food:foods(*, food_units(*)), recipe:recipes(*, recipe_ingredients(*, food:foods(*)))")
       .eq("user_id", user!.id)
       .eq("date", date)
       .order("logged_at"),
@@ -168,34 +169,9 @@ export default async function DayDetailPage({
 
       <div className="space-y-2">
         <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Detalle de comidas ({logs.length})</h2>
-        {logs.map((log) => {
-          const macros = calcLogMacros(log);
-          const name = log.food?.name ?? log.recipe?.name ?? "Desconocido";
-          const detail = log.food ? `${log.quantity_grams}g` : `x${log.multiplier}`;
-          const mealLabel = MEAL_CATEGORY_LABELS[log.meal_type as MealCategory] ?? log.meal_type;
-          const time = new Date(log.logged_at).toLocaleTimeString("es-ES", {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-
-          return (
-            <div
-              key={log.id}
-              className="glass-card px-4 py-3"
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-white/90">{name}</span>
-                  <span className="tag-muted">{mealLabel}</span>
-                </div>
-                <span className="text-xs text-white/25">{time}</span>
-              </div>
-              <p className="text-sm text-white/40">
-                {detail} — {macros.kcal} kcal · {macros.protein}g prot · {macros.fat}g grasa · {macros.carbs}g carbs
-              </p>
-            </div>
-          );
-        })}
+        {logs.map((log) => (
+          <LogEntry key={log.id} log={log} />
+        ))}
       </div>
     </div>
   );

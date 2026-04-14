@@ -146,7 +146,7 @@ export interface DailyLog {
   meal_type: MealCategory;
   logged_at: string;
   image_url: string | null;
-  food?: Food;
+  food?: FoodWithUnits;
   recipe?: RecipeWithIngredients;
 }
 

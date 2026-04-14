@@ -14,7 +14,7 @@ export default async function DespensaPage() {
       .select("*, food:foods(*)")
       .eq("user_id", user!.id)
       .order("updated_at", { ascending: false }),
-    fetchAllRows(supabase, "foods", "id, name, brand, category, store, image_url"),
+    fetchAllRows(supabase, "foods", "id, name, brand, category, store, image_url, food_units(id, name, grams)"),
   ]);
 
   return (

@@ -32,7 +32,7 @@ export default async function HoyPage() {
     await Promise.all([
       supabase
         .from("daily_logs")
-        .select("*, food:foods(*), recipe:recipes(*, recipe_ingredients(*, food:foods(*)))")
+        .select("*, food:foods(*, food_units(*)), recipe:recipes(*, recipe_ingredients(*, food:foods(*)))")
         .eq("user_id", user!.id)
         .eq("date", today)
         .order("logged_at"),

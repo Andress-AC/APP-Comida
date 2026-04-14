@@ -1,5 +1,7 @@
 "use client";
 
+"use client";
+
 import { useRef, useState } from "react";
 import { DailyLog, MEAL_CATEGORY_LABELS, MealCategory } from "@/lib/types";
 import { calcLogMacros } from "@/lib/macros";
@@ -22,7 +24,9 @@ export default function LogEntry({ log }: { log: DailyLog }) {
   const [editValue, setEditValue] = useState(
     isFood ? String(log.quantity_grams ?? "") : String(log.multiplier ?? 1)
   );
+  const [editUnit, setEditUnit] = useState("grams");
   const [saving, setSaving] = useState(false);
+  const foodUnits = isFood ? (log.food?.food_units ?? []) : [];
 
   async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -45,9 +49,18 @@ export default function LogEntry({ log }: { log: DailyLog }) {
     const num = parseFloat(editValue);
     if (isNaN(num) || num <= 0) { setEditing(false); return; }
     setSaving(true);
+    let grams: number | null = null;
+    if (isFood) {
+      if (editUnit === "grams") {
+        grams = num;
+      } else {
+        const u = foodUnits.find((u) => u.id === editUnit);
+        grams = u ? u.grams * num : num;
+      }
+    }
     await updateLogQuantity(
       log.id,
-      isFood ? num : null,
+      isFood ? grams : null,
       isFood ? null : num
     );
     setSaving(false);
@@ -90,19 +103,33 @@ export default function LogEntry({ log }: { log: DailyLog }) {
 
             {/* Quantity — tap to edit */}
             {editing ? (
-              <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                 <input
                   ref={editRef}
                   type="number"
                   min="0.1"
-                  step={isFood ? "10" : "0.5"}
+                  step={isFood ? "1" : "0.5"}
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditing(false); }}
-                  className="w-20 text-sm px-2 py-0.5 rounded-lg"
+                  className="w-16 text-sm px-2 py-0.5 rounded-lg"
                   style={{ background: "rgba(255,255,255,0.08)", border: "1px solid var(--border-warm)", color: "var(--amber)" }}
                 />
-                <span className="text-xs text-white/40">{isFood ? "g" : "×"}</span>
+                {isFood && foodUnits.length > 0 ? (
+                  <select
+                    value={editUnit}
+                    onChange={(e) => setEditUnit(e.target.value)}
+                    className="text-xs px-1.5 py-0.5 rounded-lg"
+                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid var(--border-warm)", color: "var(--text-muted)" }}
+                  >
+                    <option value="grams">g</option>
+                    {foodUnits.map((u) => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span className="text-xs text-white/40">{isFood ? "g" : "×"}</span>
+                )}
                 <button
                   onClick={commitEdit}
                   disabled={saving}
