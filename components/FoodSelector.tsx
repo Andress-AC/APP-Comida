@@ -9,6 +9,7 @@ export interface FoodOption {
   brand: string | null;
   category: string | null;
   store: string | null;
+  image_url?: string | null;
 }
 
 interface Props {
@@ -122,16 +123,37 @@ export default function FoodSelector({
                   setSearch(f.name);
                   setOpen(false);
                 }}
-                className="w-full text-left px-4 py-2.5 transition-colors hover:bg-white/5"
+                className="w-full text-left px-3 py-2 transition-colors hover:bg-white/5 flex items-center gap-2.5"
               >
-                <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                  {f.name}
-                </p>
-                {f.brand && (
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                    {f.brand}
-                  </p>
+                {f.image_url ? (
+                  <img
+                    src={f.image_url}
+                    alt=""
+                    className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                    style={{ opacity: 0.9 }}
+                  />
+                ) : (
+                  <div
+                    className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center"
+                    style={{ background: "var(--bg-card)" }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: "var(--text-muted)" }}>
+                      <rect x="3" y="3" width="18" height="18" rx="3" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </div>
                 )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>
+                    {f.name}
+                  </p>
+                  {f.brand && (
+                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+                      {f.brand}
+                    </p>
+                  )}
+                </div>
               </button>
             ))}
           </div>

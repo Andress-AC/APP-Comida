@@ -23,7 +23,7 @@ export default async function RecipeDetailPage({
 
   if (error || !recipe) redirect("/recetas");
 
-  const foods = await fetchAllRows(supabase, "foods", "id, name, brand, category, store, food_units(id, name, grams)");
+  const foods = await fetchAllRows(supabase, "foods", "id, name, brand, category, store, image_url, food_units(id, name, grams)");
 
   const macros = calcRecipeMacros(recipe as RecipeWithIngredients);
 
