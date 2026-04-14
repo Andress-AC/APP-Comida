@@ -167,7 +167,7 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
       }
       return true;
     });
-  }, [foods, activeStores, categoryFilter, normSearch]);
+  }, [foods, activeStores, categoryFilter, subcategoryFilter, normSearch]);
 
   // Fuzzy suggestion when no results
   const suggestion = useMemo(() => {
