@@ -48,7 +48,7 @@ export default async function FoodDetailPage({
             onSubmit={async (formData) => {
               "use server";
               const result = await updateFood(id, formData);
-              if (!result?.error) redirect(`/alimentos/${id}`);
+              if (!result?.error) redirect(`/alimentos#food-${id}`);
               return result;
             }}
             submitLabel="Guardar cambios"
