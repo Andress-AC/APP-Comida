@@ -4,6 +4,16 @@ import { useState, useTransition } from "react";
 import FoodSelector, { FoodOption } from "@/components/FoodSelector";
 import { addIngredient, removeIngredient, updateIngredient } from "@/actions/recipes";
 
+interface FoodUnit {
+  id: string;
+  name: string;
+  grams: number;
+}
+
+interface FoodWithUnits extends FoodOption {
+  food_units: FoodUnit[];
+}
+
 interface Ingredient {
   id: string;
   food_id: string;
@@ -14,7 +24,7 @@ interface Ingredient {
 interface Props {
   recipeId: string;
   ingredients: Ingredient[];
-  availableFoods: FoodOption[];
+  availableFoods: FoodWithUnits[];
 }
 
 export default function RecipeIngredientEditor({
@@ -22,16 +32,32 @@ export default function RecipeIngredientEditor({
   ingredients,
   availableFoods,
 }: Props) {
-  const [selectedFood, setSelectedFood] = useState<FoodOption | null>(null);
-  const [grams, setGrams] = useState("");
+  const [selectedFood, setSelectedFood] = useState<FoodWithUnits | null>(null);
+  const [qty, setQty] = useState("");
+  const [unitId, setUnitId] = useState("grams");
   const [isPending, startTransition] = useTransition();
 
+  function handleSelect(food: FoodOption) {
+    setSelectedFood(food as FoodWithUnits);
+    setUnitId("grams");
+    setQty("");
+  }
+
+  function resolveGrams(): number {
+    const n = Number(qty);
+    if (unitId === "grams") return n;
+    const u = selectedFood?.food_units.find((u) => u.id === unitId);
+    return u ? u.grams * n : n;
+  }
+
   function handleAdd() {
-    if (!selectedFood || !grams || Number(grams) <= 0) return;
+    if (!selectedFood || !qty || Number(qty) <= 0) return;
+    const grams = resolveGrams();
     startTransition(async () => {
-      await addIngredient(recipeId, selectedFood.id, Number(grams));
+      await addIngredient(recipeId, selectedFood.id, grams);
       setSelectedFood(null);
-      setGrams("");
+      setQty("");
+      setUnitId("grams");
     });
   }
 
@@ -72,7 +98,7 @@ export default function RecipeIngredientEditor({
       <div className="space-y-2 pt-2 border-t" style={{ borderColor: "var(--border-subtle)" }}>
         <FoodSelector
           foods={availableFoods}
-          onSelect={setSelectedFood}
+          onSelect={handleSelect}
           placeholder="Buscar ingrediente..."
         />
         {selectedFood && (
@@ -83,16 +109,32 @@ export default function RecipeIngredientEditor({
         <div className="flex gap-2">
           <input
             type="number"
-            placeholder="Gramos"
-            value={grams}
-            onChange={(e) => setGrams(e.target.value)}
+            placeholder="Cantidad"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleAdd()}
             className="input-dark flex-1"
+            min={0}
           />
+          {selectedFood && (
+            <select
+              value={unitId}
+              onChange={(e) => setUnitId(e.target.value)}
+              className="input-dark"
+              style={{ width: "auto" }}
+            >
+              <option value="grams">g</option>
+              {selectedFood.food_units.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.grams}g)
+                </option>
+              ))}
+            </select>
+          )}
           <button
             type="button"
             onClick={handleAdd}
-            disabled={!selectedFood || !grams || isPending}
+            disabled={!selectedFood || !qty || isPending}
             className="btn-primary"
           >
             {isPending ? "..." : "Añadir"}

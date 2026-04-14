@@ -140,7 +140,7 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
         {(["food", "recipe"] as const).map((t) => (
           <button
             key={t}
-            onClick={() => { setType(t); setSelectedId(""); }}
+            onClick={() => { setType(t); setSelectedId(""); setQuantity(t === "recipe" ? "1" : ""); }}
             className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
             style={{
               background: type === t ? 'var(--amber-glow)' : 'var(--bg-card)',
