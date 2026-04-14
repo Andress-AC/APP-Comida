@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 
 interface Props {
   existingUrl?: string | null;
@@ -13,7 +13,7 @@ export default function ImagePicker({ existingUrl }: Props) {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
-  function loadFile(file: File) {
+  const loadFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -22,7 +22,23 @@ export default function ImagePicker({ existingUrl }: Props) {
       setDataUrl(url);
     };
     reader.readAsDataURL(file);
-  }
+  }, []);
+
+  // Global paste listener — works regardless of which element has focus
+  useEffect(() => {
+    function onWindowPaste(e: ClipboardEvent) {
+      const item = Array.from(e.clipboardData?.items ?? []).find((i) =>
+        i.type.startsWith("image/")
+      );
+      if (item) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) loadFile(file);
+      }
+    }
+    window.addEventListener("paste", onWindowPaste);
+    return () => window.removeEventListener("paste", onWindowPaste);
+  }, [loadFile]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -38,7 +54,7 @@ export default function ImagePicker({ existingUrl }: Props) {
       const file = item.getAsFile();
       if (file) loadFile(file);
     }
-  }, []);
+  }, [loadFile]);
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
