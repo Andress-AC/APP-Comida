@@ -61,7 +61,10 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
   );
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [subcategoryFilter, setSubcategoryFilter] = useState<string>("");
-  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(new Set());
+  // Start all collapsed to avoid rendering 4000+ cards at once
+  const [collapsedCats, setCollapsedCats] = useState<Set<string>>(
+    () => new Set([...FOOD_CATEGORIES, "__favs__"])
+  );
 
   // Selection / bulk
   const [selectionMode, setSelectionMode] = useState(false);
@@ -370,6 +373,31 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
         <p className="text-center py-8" style={{ color: "var(--text-muted)" }}>No hay alimentos</p>
       )}
 
+      {/* ── Search mode: flat list (no category grouping) ── */}
+      {normSearch && filtered.length > 0 && (
+        <section>
+          <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--text-muted)" }}>
+            Resultados ({filtered.length})
+          </p>
+          <div className="space-y-2">
+            {filtered.slice(0, 100).map((food) => (
+              <FoodCard key={food.id} food={food} isFavorite={favSet.has(food.id)}
+                selectable={selectionMode} selected={selectedIds.has(food.id)} onToggle={() => toggleSelection(food.id)}
+                listButton={<FoodListButton foodId={food.id} lists={lists} />}
+              />
+            ))}
+          </div>
+          {filtered.length > 100 && (
+            <p className="text-sm text-center mt-3" style={{ color: "var(--text-muted)" }}>
+              Mostrando 100 de {filtered.length} — afina la búsqueda para ver más
+            </p>
+          )}
+        </section>
+      )}
+
+      {/* ── Browse mode: favorites + lists + categories (all collapsed by default) ── */}
+      {!normSearch && <>
+
       {/* Favorites */}
       {favorites.length > 0 && !categoryFilter && (
         <section>
@@ -521,6 +549,8 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
           )}
         </section>
       ))}
+
+      </> /* end browse mode */}
     </div>
   );
 }
