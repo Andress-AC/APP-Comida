@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { FoodWithUnits } from "@/lib/types";
+import { fetchAllRows } from "@/lib/fetch-all-foods";
 import FoodForm from "@/components/FoodForm";
 import BarcodeScanner from "@/components/BarcodeScanner";
 import LabelScanner from "@/components/LabelScanner";
@@ -23,13 +24,12 @@ export default async function AlimentosPage() {
   const favIds = Array.from(favsResult.foodIds);
   const hiddenIds = new Set((hiddenResult.data ?? []).map((r: any) => r.food_id as string));
 
-  const { data: rawFoods } = await supabase
-    .from("foods")
-    .select("id, name, brand, kcal, protein, fat, carbs, sugar, fiber, salt, saturated_fat, image_url, category, subcategory, store, is_global, created_by, created_at")
-    .order("name")
-    .limit(5000);
+  const rawFoods = await fetchAllRows(
+    supabase, "foods",
+    "id, name, brand, kcal, protein, fat, carbs, sugar, fiber, salt, saturated_fat, image_url, category, subcategory, store, is_global, created_by, created_at"
+  );
   // food_units not needed for list view — cast as FoodWithUnits with empty units
-  const foods = (rawFoods ?? [])
+  const foods = rawFoods
     .filter((f: any) => !hiddenIds.has(f.id))
     .map((f: any) => ({ ...f, food_units: [] })) as FoodWithUnits[];
 

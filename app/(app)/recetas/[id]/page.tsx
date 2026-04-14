@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { RecipeWithIngredients, MealCategory } from "@/lib/types";
+import { fetchAllRows } from "@/lib/fetch-all-foods";
 import { calcRecipeMacros } from "@/lib/macros";
 import { updateRecipeName, deleteRecipe } from "@/actions/recipes";
 import RecipeIngredientEditor from "./RecipeIngredientEditor";
@@ -22,11 +23,7 @@ export default async function RecipeDetailPage({
 
   if (error || !recipe) redirect("/recetas");
 
-  const { data: foods } = await supabase
-    .from("foods")
-    .select("id, name, brand, category, store")
-    .order("name")
-    .limit(5000);
+  const foods = await fetchAllRows(supabase, "foods", "id, name, brand, category, store");
 
   const macros = calcRecipeMacros(recipe as RecipeWithIngredients);
 
@@ -77,7 +74,7 @@ export default async function RecipeDetailPage({
         <RecipeIngredientEditor
           recipeId={id}
           ingredients={recipe.recipe_ingredients}
-          availableFoods={foods ?? []}
+          availableFoods={foods}
         />
       </section>
 
