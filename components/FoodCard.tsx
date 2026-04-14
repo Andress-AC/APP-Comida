@@ -18,6 +18,7 @@ export default function FoodCard({
   selectable = false,
   selected = false,
   onToggle,
+  listButton,
 }: Props) {
   const inner = (
     <div className="flex items-center gap-3">
