@@ -161,7 +161,7 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
             style={{ width: "auto" }}
           >
             <option value="grams">gramos</option>
-            {selectedFood.food_units.map((u) => (
+            {selectedFood?.food_units.map((u) => (
               <option key={u.id} value={u.name}>
                 {u.name} ({u.grams}g)
               </option>
