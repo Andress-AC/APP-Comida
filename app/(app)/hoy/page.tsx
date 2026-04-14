@@ -14,6 +14,7 @@ import TemplateSection from "@/components/TemplateSection";
 import ShareDayButton from "@/components/ShareDayButton";
 import { getFavorites } from "@/actions/favorites";
 import { getTemplates } from "@/actions/templates";
+import { fetchAllRows } from "@/lib/fetch-all-foods";
 
 export default async function HoyPage() {
   const supabase = await createClient();
@@ -28,7 +29,7 @@ export default async function HoyPage() {
   const dayStartHour = profile?.day_start_hour ?? 5;
   const today = getEffectiveDateStr(dayStartHour);
 
-  const [logsResult, goalsResult, overridesResult, foodsResult, recipesResult, noteResult, exerciseResult, favs, templates] =
+  const [logsResult, goalsResult, overridesResult, foodsData, recipesResult, noteResult, exerciseResult, favs, templates] =
     await Promise.all([
       supabase
         .from("daily_logs")
@@ -45,10 +46,7 @@ export default async function HoyPage() {
         .select("*")
         .eq("user_id", user!.id)
         .eq("date", today),
-      supabase
-        .from("foods")
-        .select("*, food_units(*)")
-        .order("name"),
+      fetchAllRows(supabase, "foods", "*, food_units(*)"),
       supabase
         .from("recipes")
         .select("*, recipe_ingredients(*, food:foods(*))")
@@ -103,7 +101,7 @@ export default async function HoyPage() {
       <TemplateSection templates={templates} hasLogsToday={logs.length > 0} />
 
       <ManualLogForm
-        foods={(foodsResult.data ?? []) as FoodWithUnits[]}
+        foods={(foodsData ?? []) as FoodWithUnits[]}
         recipes={(recipesResult.data ?? []) as RecipeWithIngredients[]}
         favoriteFoodIds={favs.foodIds}
         favoriteRecipeIds={favs.recipeIds}
