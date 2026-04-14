@@ -5,7 +5,7 @@ import { FoodWithUnits } from "@/lib/types";
 import { FOOD_CATEGORIES, CATEGORY_ORDER, SUBCATEGORIES } from "@/lib/categories";
 import FoodCard from "@/components/FoodCard";
 import FoodListButton, { UserList } from "@/components/FoodListButton";
-import { bulkDeleteFoods, bulkUpdateCategory } from "@/actions/foods";
+import { bulkDeleteFoods, bulkUpdateCategory, bulkUpdateSubcategory } from "@/actions/foods";
 import { createList, deleteList } from "@/actions/food-lists";
 
 type Store = "mercadona" | "consum" | "otros";
@@ -71,6 +71,7 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [bulkCategory, setBulkCategory] = useState("");
+  const [bulkSubcategory, setBulkSubcategory] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -116,6 +117,7 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
     setSelectedIds(new Set());
     setConfirmDelete(false);
     setBulkCategory("");
+    setBulkSubcategory("");
     setError(null);
   }
 
@@ -153,6 +155,23 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
       else exitSelectionMode();
     });
   }
+
+  function handleBulkSubcategory() {
+    if (!bulkSubcategory) return;
+    setError(null);
+    startTransition(async () => {
+      const result = await bulkUpdateSubcategory(Array.from(selectedIds), bulkSubcategory);
+      if (result.error) setError(result.error);
+      else exitSelectionMode();
+    });
+  }
+
+  // Category whose subcategories to show in bulk panel:
+  // prefer the explicitly chosen bulkCategory, fall back to active categoryFilter
+  const bulkSubcatSource = bulkCategory || categoryFilter;
+  const bulkSubcatOptions = bulkSubcatSource
+    ? (SUBCATEGORIES[bulkSubcatSource as keyof typeof SUBCATEGORIES] ?? null)
+    : null;
 
   // ─── Filtering ──────────────────────────────────────────────────────────────
   const normSearch = norm(search.trim());
@@ -333,8 +352,9 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
                 Eliminar
               </button>
               {isAdmin && (
-                <div className="flex gap-2 items-center flex-wrap">
-                  <select value={bulkCategory} onChange={(e) => setBulkCategory(e.target.value)} className="input-dark text-sm py-1.5" style={{ minWidth: "160px" }}>
+                <div className="flex gap-2 items-center flex-wrap w-full">
+                  {/* Bulk category */}
+                  <select value={bulkCategory} onChange={(e) => { setBulkCategory(e.target.value); setBulkSubcategory(""); }} className="input-dark text-sm py-1.5" style={{ minWidth: "160px" }}>
                     <option value="">Cambiar categoría…</option>
                     {FOOD_CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
@@ -342,6 +362,34 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
                     <button onClick={handleBulkCategory} disabled={isPending} className="px-3 py-1.5 rounded-lg text-sm font-medium" style={{ background: "var(--amber-glow)", color: "var(--amber)", border: "1px solid var(--border-warm-strong)" }}>
                       {isPending ? "Aplicando…" : "Aplicar"}
                     </button>
+                  )}
+                  {/* Bulk subcategory — shown when source category has subcategories */}
+                  {bulkSubcatOptions && (
+                    <>
+                      <select value={bulkSubcategory} onChange={(e) => setBulkSubcategory(e.target.value)} className="input-dark text-sm py-1.5" style={{ minWidth: "180px" }}>
+                        <option value="">Cambiar subcategoría…</option>
+                        <option value="__clear__">— Sin subcategoría —</option>
+                        {bulkSubcatOptions.map((sub) => <option key={sub} value={sub}>{sub}</option>)}
+                      </select>
+                      {bulkSubcategory && (
+                        <button
+                          onClick={() => {
+                            const val = bulkSubcategory === "__clear__" ? "" : bulkSubcategory;
+                            setError(null);
+                            startTransition(async () => {
+                              const result = await bulkUpdateSubcategory(Array.from(selectedIds), val);
+                              if (result.error) setError(result.error);
+                              else exitSelectionMode();
+                            });
+                          }}
+                          disabled={isPending}
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium"
+                          style={{ background: "var(--amber-glow)", color: "var(--amber)", border: "1px solid var(--border-warm-strong)" }}
+                        >
+                          {isPending ? "Aplicando…" : "Aplicar"}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}

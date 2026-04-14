@@ -366,6 +366,30 @@ export async function bulkUpdateCategory(ids: string[], category: string) {
   return { success: true };
 }
 
+export async function bulkUpdateSubcategory(ids: string[], subcategory: string) {
+  if (!ids.length) return { success: true };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_admin) return { error: "No autorizado" };
+
+  const { error } = await supabase
+    .from("foods")
+    .update({ subcategory: subcategory || null })
+    .in("id", ids);
+
+  if (error) return { error: error.message };
+  revalidatePath("/alimentos");
+  return { success: true };
+}
+
 export async function deleteFoodUnit(unitId: string, foodId: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("food_units").delete().eq("id", unitId);
