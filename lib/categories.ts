@@ -49,4 +49,14 @@ export const SUBCATEGORIES: Partial<Record<FoodCategory, string[]>> = {
     "Tartas y churros",
     "Verdura",
   ],
+  "Verduras y hortalizas": [
+    "Fruta",
+    "Verdura de hoja",
+    "Tubérculos y raíces",
+    "Tomates y pimientos",
+    "Crucíferas",
+    "Cebollas y ajos",
+    "Hongos y setas",
+    "Legumbres frescas",
+  ],
 };
