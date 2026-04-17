@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { geminiModel } from "@/lib/gemini";
+import { fetchAllRows } from "@/lib/fetch-all-foods";
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
@@ -10,13 +11,11 @@ export async function POST(request: NextRequest) {
   const { text } = await request.json();
   if (!text) return NextResponse.json({ error: "No text provided" }, { status: 400 });
 
-  const { data: foods } = await supabase
-    .from("foods")
-    .select("id, name, food_units(name, grams)");
-
-  const { data: recipes } = await supabase
-    .from("recipes")
-    .select("id, name");
+  const [foods, recipesResult] = await Promise.all([
+    fetchAllRows(supabase, "foods", "id, name, food_units(name, grams)"),
+    supabase.from("recipes").select("id, name"),
+  ]);
+  const recipes = recipesResult.data;
 
   const foodCatalog = (foods ?? [])
     .map((f: any) => {
