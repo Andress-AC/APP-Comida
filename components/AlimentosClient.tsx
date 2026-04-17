@@ -177,7 +177,7 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
   const normSearch = norm(search.trim());
 
   const filtered = useMemo(() => {
-    return foods.filter((f) => {
+    const results = foods.filter((f) => {
       if (!activeStores.has(getStore(f))) return false;
       if (categoryFilter && (f.category ?? "Otros") !== categoryFilter) return false;
       if (subcategoryFilter && (f.subcategory ?? "") !== subcategoryFilter) return false;
@@ -189,6 +189,25 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
       }
       return true;
     });
+
+    // In search mode, rank: exact match > starts with > contains (then alphabetical)
+    if (normSearch) {
+      results.sort((a, b) => {
+        const na = norm(a.name);
+        const nb = norm(b.name);
+        const aExact = na === normSearch;
+        const bExact = nb === normSearch;
+        if (aExact && !bExact) return -1;
+        if (bExact && !aExact) return 1;
+        const aStarts = na.startsWith(normSearch);
+        const bStarts = nb.startsWith(normSearch);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+        return na.localeCompare(nb);
+      });
+    }
+
+    return results;
   }, [foods, activeStores, categoryFilter, subcategoryFilter, normSearch]);
 
   // Fuzzy suggestion when no results
