@@ -66,6 +66,42 @@ export async function deleteRecipe(id: string) {
   return { success: true };
 }
 
+export async function duplicateRecipe(id: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  // Fetch original recipe with its ingredients
+  const { data: original, error: fetchError } = await supabase
+    .from("recipes")
+    .select("*, recipe_ingredients(food_id, quantity_grams)")
+    .eq("id", id)
+    .single();
+  if (fetchError || !original) return { error: "Receta no encontrada" };
+
+  // Create the copy
+  const { data: copy, error: createError } = await supabase
+    .from("recipes")
+    .insert({ name: `Copia de ${original.name}`, categories: original.categories, created_by: user.id })
+    .select()
+    .single();
+  if (createError || !copy) return { error: createError?.message ?? "Error al duplicar" };
+
+  // Copy all ingredients
+  if (original.recipe_ingredients.length > 0) {
+    await supabase.from("recipe_ingredients").insert(
+      original.recipe_ingredients.map((ing: { food_id: string; quantity_grams: number }) => ({
+        recipe_id: copy.id,
+        food_id: ing.food_id,
+        quantity_grams: ing.quantity_grams,
+      }))
+    );
+  }
+
+  revalidatePath("/recetas");
+  return { success: true, id: copy.id };
+}
+
 export async function addIngredient(recipeId: string, foodId: string, quantityGrams: number) {
   const supabase = await createClient();
   const { error } = await supabase.from("recipe_ingredients").insert({

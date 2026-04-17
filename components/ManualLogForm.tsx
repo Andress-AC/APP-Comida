@@ -11,6 +11,7 @@ interface Props {
   recipes: RecipeWithIngredients[];
   favoriteFoodIds?: Set<string>;
   favoriteRecipeIds?: Set<string>;
+  recentFoods?: FoodWithUnits[];
 }
 
 function getDefaultMealType(): MealCategory {
@@ -22,7 +23,7 @@ function getDefaultMealType(): MealCategory {
   return "cena";
 }
 
-export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favoriteRecipeIds }: Props) {
+export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favoriteRecipeIds, recentFoods = [] }: Props) {
   const [type, setType] = useState<"food" | "recipe">("food");
   const [selectedFood, setSelectedFood] = useState<FoodWithUnits | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState("");
@@ -115,6 +116,29 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
       {/* Food search */}
       {type === "food" && (
         <>
+          {/* Recent foods chips */}
+          {recentFoods.length > 0 && !selectedFood && (
+            <div>
+              <p className="text-xs mb-1.5" style={{ color: "var(--text-muted)" }}>Recientes</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {recentFoods.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => { setSelectedFood(f); setUnit("grams"); }}
+                    className="text-xs px-2.5 py-1 rounded-full transition-all"
+                    style={{
+                      background: "var(--bg-card)",
+                      border: "1px solid var(--border-subtle)",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {f.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <FoodSelector
             foods={sortedFoods as FoodOption[]}
             onSelect={(food) => {

@@ -6,6 +6,7 @@ import { calcRecipeMacros } from "@/lib/macros";
 import { updateRecipeName, deleteRecipe } from "@/actions/recipes";
 import RecipeIngredientEditor from "./RecipeIngredientEditor";
 import RecipeCategorySelect from "@/components/RecipeCategorySelect";
+import DuplicateRecipeButton from "./DuplicateRecipeButton";
 
 export default async function RecipeDetailPage({
   params,
@@ -77,6 +78,8 @@ export default async function RecipeDetailPage({
           availableFoods={foods}
         />
       </section>
+
+      <DuplicateRecipeButton recipeId={id} />
 
       <form
         action={async () => {

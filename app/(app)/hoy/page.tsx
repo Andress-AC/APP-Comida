@@ -29,7 +29,11 @@ export default async function HoyPage() {
   const dayStartHour = profile?.day_start_hour ?? 5;
   const today = getEffectiveDateStr(dayStartHour);
 
-  const [logsResult, goalsResult, overridesResult, foodsData, recipesResult, noteResult, exerciseResult, favs, templates] =
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().slice(0, 10);
+
+  const [logsResult, goalsResult, overridesResult, foodsData, recipesResult, noteResult, exerciseResult, favs, templates, recentLogsResult] =
     await Promise.all([
       supabase
         .from("daily_logs")
@@ -65,10 +69,30 @@ export default async function HoyPage() {
         .order("created_at"),
       getFavorites(),
       getTemplates(),
+      supabase
+        .from("daily_logs")
+        .select("food_id")
+        .eq("user_id", user!.id)
+        .not("food_id", "is", null)
+        .gte("date", thirtyDaysAgoStr)
+        .order("logged_at", { ascending: false })
+        .limit(300),
     ]);
 
   const logs = (logsResult.data ?? []) as DailyLog[];
   const exercises = (exerciseResult.data ?? []) as DailyExercise[];
+
+  // Compute top-8 most frequent foods in last 30 days
+  const freqMap = new Map<string, number>();
+  for (const row of recentLogsResult.data ?? []) {
+    if (row.food_id) freqMap.set(row.food_id, (freqMap.get(row.food_id) ?? 0) + 1);
+  }
+  const allFoods = (foodsData ?? []) as FoodWithUnits[];
+  const recentFoods = [...freqMap.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([id]) => allFoods.find((f) => f.id === id))
+    .filter(Boolean) as FoodWithUnits[];
   const totals = calcDayTotals(logs);
   const effectiveGoals = getEffectiveGoals(
     goalsResult.data ?? [],
@@ -101,10 +125,11 @@ export default async function HoyPage() {
       <TemplateSection templates={templates} hasLogsToday={logs.length > 0} />
 
       <ManualLogForm
-        foods={(foodsData ?? []) as FoodWithUnits[]}
+        foods={allFoods}
         recipes={(recipesResult.data ?? []) as RecipeWithIngredients[]}
         favoriteFoodIds={favs.foodIds}
         favoriteRecipeIds={favs.recipeIds}
+        recentFoods={recentFoods}
       />
 
       <div className="space-y-2">
