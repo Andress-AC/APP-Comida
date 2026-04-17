@@ -13,7 +13,7 @@ export interface FoodOption {
   image_url?: string | null;
 }
 
-interface DropdownPos { top: number; left: number; width: number; maxHeight: number; }
+interface DropdownPos { top: number; left: number; width: number; maxHeight: number; above: boolean; }
 
 interface Props {
   foods: FoodOption[];
@@ -39,32 +39,61 @@ export default function FoodSelector({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // --- Search with ranked results: exact > starts-with > contains ---
   const filtered = useMemo(() => {
     if (!search.trim() && !categoryFilter) return [];
     const q = normalize(search.trim());
-    return foods
-      .filter((f) => {
-        if (categoryFilter && (f.category ?? "Otros") !== categoryFilter) return false;
-        if (q) return normalize(f.name).includes(q) || normalize(f.brand ?? "").includes(q);
-        return true;
-      })
-      .slice(0, 60);
+
+    const results = foods.filter((f) => {
+      if (categoryFilter && (f.category ?? "Otros") !== categoryFilter) return false;
+      if (q) return normalize(f.name).includes(q) || normalize(f.brand ?? "").includes(q);
+      return true;
+    });
+
+    if (q) {
+      results.sort((a, b) => {
+        const na = normalize(a.name);
+        const nb = normalize(b.name);
+        // 1. Exact match
+        const aExact = na === q;
+        const bExact = nb === q;
+        if (aExact && !bExact) return -1;
+        if (bExact && !aExact) return 1;
+        // 2. Starts with query
+        const aStarts = na.startsWith(q);
+        const bStarts = nb.startsWith(q);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+        // 3. Alphabetical
+        return na.localeCompare(nb);
+      });
+    }
+
+    return results.slice(0, 60);
   }, [foods, search, categoryFilter]);
 
-  // Calculate dropdown position using visual viewport (accounts for mobile keyboard)
+  // --- Dropdown position: accounts for visualViewport offset (mobile keyboard) ---
   const calcPos = useCallback(() => {
     const input = inputRef.current;
     if (!input) return;
     const rect = input.getBoundingClientRect();
-    const vvh = window.visualViewport?.height ?? window.innerHeight;
+    const vv = window.visualViewport;
+    const vvh = vv?.height ?? window.innerHeight;
+    const vvOffsetTop = vv?.offsetTop ?? 0;
+    const vvOffsetLeft = vv?.offsetLeft ?? 0;
     const spaceBelow = vvh - rect.bottom - 8;
-    const spaceAbove = rect.top - 8;
-    const maxH = Math.min(240, Math.max(spaceBelow, spaceAbove) - 4);
+    const spaceAbove = rect.top - vvOffsetTop - 8;
+    const above = spaceAbove > spaceBelow && spaceAbove > 120;
+    const maxH = Math.min(260, (above ? spaceAbove : spaceBelow) - 4);
+    const top = above
+      ? rect.top + vvOffsetTop - maxH - 4
+      : rect.bottom + vvOffsetTop + 4;
     setDropPos({
-      top: spaceBelow >= spaceAbove ? rect.bottom + 4 : rect.top - Math.min(240, spaceAbove) - 4,
-      left: rect.left,
+      top,
+      left: rect.left + vvOffsetLeft,
       width: rect.width,
       maxHeight: maxH,
+      above,
     });
   }, []);
 
@@ -86,7 +115,6 @@ export default function FoodSelector({
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        // Also check if click is inside the portal dropdown
         const portal = document.getElementById("food-selector-portal");
         if (portal && portal.contains(e.target as Node)) return;
         setOpen(false);
@@ -95,6 +123,10 @@ export default function FoodSelector({
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  // --- Touch scroll detection: don't select if user was scrolling ---
+  const touchStartY = useRef(0);
+  const touchMoved = useRef(false);
 
   const dropdown = open && filtered.length > 0 && dropPos ? createPortal(
     <div
@@ -111,6 +143,16 @@ export default function FoodSelector({
         border: "1px solid var(--border-warm)",
         borderRadius: "12px",
         boxShadow: "0 8px 32px rgba(0,0,0,0.6)",
+        WebkitOverflowScrolling: "touch",
+      }}
+      onTouchStart={(e) => {
+        touchStartY.current = e.touches[0].clientY;
+        touchMoved.current = false;
+      }}
+      onTouchMove={(e) => {
+        if (Math.abs(e.touches[0].clientY - touchStartY.current) > 8) {
+          touchMoved.current = true;
+        }
       }}
     >
       {filtered.map((f) => (
@@ -124,12 +166,13 @@ export default function FoodSelector({
             setOpen(false);
           }}
           onTouchEnd={(e) => {
+            if (touchMoved.current) return; // user was scrolling, ignore
             e.preventDefault();
             onSelect(f);
             setSearch(f.name);
             setOpen(false);
           }}
-          className="w-full text-left px-3 py-2 transition-colors hover:bg-white/5 flex items-center gap-2.5"
+          className="w-full text-left px-3 py-2.5 transition-colors hover:bg-white/5 flex items-center gap-2.5 border-b border-white/[0.04] last:border-0"
         >
           {f.image_url ? (
             <img src={f.image_url} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" style={{ opacity: 0.9 }} />
@@ -142,10 +185,14 @@ export default function FoodSelector({
               </svg>
             </div>
           )}
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium truncate" style={{ color: "var(--text-primary)" }}>{f.name}</p>
             {f.brand && <p className="text-xs" style={{ color: "var(--text-muted)" }}>{f.brand}</p>}
           </div>
+          {/* Tap hint on the right — helps mobile users know they can tap */}
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="flex-shrink-0 opacity-20">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </button>
       ))}
     </div>,

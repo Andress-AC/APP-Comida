@@ -29,32 +29,34 @@ export default function FoodUnitsList({ food }: { food: FoodWithUnits }) {
         </div>
       ))}
 
-      <div className="flex gap-2">
+      <div className="space-y-2">
         <input
-          placeholder="Nombre (ej: bolsa)"
+          placeholder="Nombre de la unidad (ej: bolsa, cazo, lata...)"
           value={unitName}
           onChange={(e) => setUnitName(e.target.value)}
-          className="input-dark flex-1"
+          className="input-dark w-full"
         />
-        <input
-          placeholder="Gramos"
-          type="number"
-          value={unitGrams}
-          onChange={(e) => setUnitGrams(e.target.value)}
-          className="input-dark w-24"
-        />
-        <button
-          onClick={async () => {
-            if (unitName && unitGrams) {
-              await addFoodUnit(food.id, unitName, Number(unitGrams));
-              setUnitName("");
-              setUnitGrams("");
-            }
-          }}
-          className="btn-primary"
-        >
-          Añadir
-        </button>
+        <div className="flex gap-2">
+          <input
+            placeholder="Gramos equivalentes"
+            type="number"
+            value={unitGrams}
+            onChange={(e) => setUnitGrams(e.target.value)}
+            className="input-dark flex-1"
+          />
+          <button
+            onClick={async () => {
+              if (unitName && unitGrams) {
+                await addFoodUnit(food.id, unitName, Number(unitGrams));
+                setUnitName("");
+                setUnitGrams("");
+              }
+            }}
+            className="btn-primary"
+          >
+            Añadir
+          </button>
+        </div>
       </div>
     </div>
   );

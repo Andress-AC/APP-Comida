@@ -96,27 +96,29 @@ export default function ExerciseSection({ date, exercises, currentSteps }: Props
           {/* Add activity */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Añadir actividad</label>
-            <div className="flex gap-2">
+            <div className="space-y-2">
               <input
                 placeholder="Ej: 1h gimnasio — pecho y bíceps"
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
-                className="input-dark flex-1"
+                className="input-dark w-full"
               />
-              <input
-                type="number"
-                placeholder="kcal"
-                value={cals}
-                onChange={(e) => setCals(e.target.value)}
-                className="input-dark w-20"
-              />
-              <button
-                onClick={handleAddExercise}
-                disabled={savingExercise || !desc.trim()}
-                className="btn-sage"
-              >
-                {savingExercise ? "..." : "+"}
-              </button>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  placeholder="Calorías quemadas (opcional)"
+                  value={cals}
+                  onChange={(e) => setCals(e.target.value)}
+                  className="input-dark flex-1"
+                />
+                <button
+                  onClick={handleAddExercise}
+                  disabled={savingExercise || !desc.trim()}
+                  className="btn-sage"
+                >
+                  {savingExercise ? "..." : "Añadir"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
