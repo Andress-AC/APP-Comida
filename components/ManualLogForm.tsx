@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { FoodWithUnits, RecipeWithIngredients, MEAL_CATEGORIES, MealCategory } from "@/lib/types";
 import { logFood, logRecipe } from "@/actions/daily-logs";
 import FoodSelector, { FoodOption } from "@/components/FoodSelector";
+import RecipeSelector from "@/components/RecipeSelector";
 
 interface Props {
   foods: FoodWithUnits[];
@@ -25,6 +26,7 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
   const [type, setType] = useState<"food" | "recipe">("food");
   const [selectedFood, setSelectedFood] = useState<FoodWithUnits | null>(null);
   const [selectedRecipeId, setSelectedRecipeId] = useState("");
+  const [selectedRecipeName, setSelectedRecipeName] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unit, setUnit] = useState("grams");
   const [mealType, setMealType] = useState<MealCategory>(getDefaultMealType);
@@ -56,6 +58,7 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
     setType(t);
     setSelectedFood(null);
     setSelectedRecipeId("");
+    setSelectedRecipeName("");
     setQuantity(t === "recipe" ? "1" : "");
     setUnit("grams");
   }
@@ -74,6 +77,7 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
     }
     setSelectedFood(null);
     setSelectedRecipeId("");
+    setSelectedRecipeName("");
     setQuantity("");
     setUnit("grams");
     setSaving(false);
@@ -127,20 +131,25 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
         </>
       )}
 
-      {/* Recipe select */}
+      {/* Recipe search */}
       {type === "recipe" && (
-        <select
-          value={selectedRecipeId}
-          onChange={(e) => setSelectedRecipeId(e.target.value)}
-          className="input-dark w-full"
-        >
-          <option value="">Seleccionar receta...</option>
-          {sortedRecipes.map((r) => (
-            <option key={r.id} value={r.id}>
-              {favoriteRecipeIds?.has(r.id) ? "⭐ " : ""}{r.name}
-            </option>
-          ))}
-        </select>
+        <>
+          <RecipeSelector
+            recipes={sortedRecipes}
+            favoriteIds={favoriteRecipeIds}
+            value={selectedRecipeName}
+            onSelect={(r) => {
+              setSelectedRecipeId(r.id);
+              setSelectedRecipeName(r.name);
+            }}
+            placeholder="Buscar receta..."
+          />
+          {selectedRecipeId && (
+            <p className="text-xs px-2 py-1 rounded-lg" style={{ color: "var(--amber)", background: "var(--amber-glow)" }}>
+              ✓ {selectedRecipeName}
+            </p>
+          )}
+        </>
       )}
 
       {/* Quantity + unit */}
