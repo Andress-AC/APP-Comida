@@ -22,10 +22,9 @@ export default async function AdminPage() {
     "id, name, brand, kcal, protein, fat, saturated_fat, carbs, sugar, fiber, salt"
   );
 
-  // Foods with any key macro = 0
-  const incomplete = allFoods.filter(
-    (f: any) => f.kcal === 0 || f.protein === 0 || f.fat === 0 || f.carbs === 0
-  ) as {
+  // Foods with kcal = 0 → clearly no macros filled in
+  // (foods like olive oil have protein=0 but kcal>0, which is correct)
+  const incomplete = allFoods.filter((f: any) => f.kcal === 0) as {
     id: string;
     name: string;
     brand: string;
@@ -38,13 +37,6 @@ export default async function AdminPage() {
     fiber: number;
     salt: number;
   }[];
-
-  // Sort: most zeros first
-  incomplete.sort((a, b) => {
-    const zeros = (f: typeof a) =>
-      [f.kcal, f.protein, f.fat, f.carbs].filter((v) => v === 0).length;
-    return zeros(b) - zeros(a);
-  });
 
   return (
     <div className="space-y-4">
@@ -59,7 +51,7 @@ export default async function AdminPage() {
       </div>
 
       <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-        Alimentos con kcal, proteína, grasa o carbos = 0. Haz clic en Editar para completar.
+        Alimentos con kcal = 0 (sin macros rellenos). Los que tienen kcal &gt; 0 pero otros macros a 0 son correctos (ej. aceite).
       </p>
 
       <AdminFoodsClient foods={incomplete} />
