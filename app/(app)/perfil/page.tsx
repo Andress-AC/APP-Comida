@@ -2,6 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/actions/auth";
 import Link from "next/link";
 
+function NavLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between py-2 px-3 rounded-xl transition-all"
+      style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-subtle)" }}
+    >
+      <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{label}</span>
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--text-muted)" }}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
+    </Link>
+  );
+}
+
 export default async function PerfilPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -83,32 +98,17 @@ export default async function PerfilPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </Link>
-          <Link
-            href="/compra"
-            className="flex items-center justify-between py-2 px-3 rounded-xl transition-all"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-subtle)" }}
-          >
-            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
-              Lista de la compra
-            </span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--text-muted)" }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
+          <NavLink href="/compra" label="Lista de la compra" />
+          <NavLink href="/despensa" label="Despensa" />
         </div>
       )}
 
-      {/* Lista de la compra for all users */}
+      {/* Accesos rápidos para todos los usuarios */}
       {!profile?.is_admin && (
-        <Link
-          href="/compra"
-          className="flex items-center justify-between glass-card p-4"
-        >
-          <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Lista de la compra</span>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--text-muted)" }}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
+        <div className="glass-card-static p-4 space-y-2">
+          <NavLink href="/compra" label="Lista de la compra" />
+          <NavLink href="/despensa" label="Despensa" />
+        </div>
       )}
 
       <div className="glass-card p-4 text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
