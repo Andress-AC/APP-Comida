@@ -9,7 +9,8 @@ import { deleteLog, uploadLogPhoto, updateLogQuantity } from "@/actions/daily-lo
 
 export default function LogEntry({ log }: { log: DailyLog }) {
   const macros = calcLogMacros(log);
-  const name = log.food?.name ?? log.recipe?.name ?? "Desconocido";
+  const isCustom = !log.food && !log.recipe && log.custom_kcal != null;
+  const name = log.food?.name ?? log.recipe?.name ?? log.custom_name ?? "Entrada personalizada";
   const isFood = !!log.food;
   const mealLabel = MEAL_CATEGORY_LABELS[log.meal_type as MealCategory] ?? log.meal_type;
 
@@ -125,7 +126,9 @@ export default function LogEntry({ log }: { log: DailyLog }) {
     setEditing(false);
   }
 
-  const detail = isFood
+  const detail = isCustom
+    ? `${macros.kcal} kcal directo`
+    : isFood
     ? `${log.quantity_grams}g`
     : `x${log.multiplier}`;
 
@@ -194,7 +197,14 @@ export default function LogEntry({ log }: { log: DailyLog }) {
                 <span className="tag-muted shrink-0">{mealLabel}</span>
               </div>
 
-              {/* Quantity — tap to edit */}
+              {/* Custom entry badge */}
+              {isCustom && (
+                <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: "rgba(107,143,113,0.15)", color: "var(--sage)" }}>
+                  entrada manual
+                </span>
+              )}
+
+              {/* Quantity — tap to edit (not available for custom entries) */}
               {editing ? (
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   <input
@@ -234,10 +244,17 @@ export default function LogEntry({ log }: { log: DailyLog }) {
                   <button onClick={() => setEditing(false)} className="text-xs text-white/30 hover:text-white/50">✕</button>
                 </div>
               ) : (
-                <button onClick={startEdit} className="text-left group" title="Toca para editar cantidad">
+                <button
+                  onClick={isCustom ? undefined : startEdit}
+                  className={`text-left ${isCustom ? "cursor-default" : "group"}`}
+                  title={isCustom ? undefined : "Toca para editar cantidad"}
+                >
                   <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">
-                    <span className="underline decoration-dotted underline-offset-2">{detail}</span>
-                    {" "}— {macros.kcal} kcal · {macros.protein}g prot
+                    {!isCustom && <span className="underline decoration-dotted underline-offset-2">{detail}</span>}
+                    {!isCustom && " — "}
+                    {macros.kcal} kcal · {macros.protein}g prot
+                    {isCustom && macros.fat > 0 && ` · ${macros.fat}g grasa`}
+                    {isCustom && macros.carbs > 0 && ` · ${macros.carbs}g carbs`}
                   </p>
                 </button>
               )}

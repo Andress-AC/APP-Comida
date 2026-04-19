@@ -37,6 +37,19 @@ export function calcLogMacros(log: DailyLog): MacroTotals {
     const recipeMacros = calcRecipeMacros(log.recipe);
     return multiplyMacros(recipeMacros, log.multiplier);
   }
+  // Custom macro entry
+  if (log.custom_kcal != null) {
+    return {
+      kcal: log.custom_kcal,
+      protein: log.custom_protein ?? 0,
+      fat: log.custom_fat ?? 0,
+      saturated_fat: 0,
+      carbs: log.custom_carbs ?? 0,
+      sugar: 0,
+      fiber: log.custom_fiber ?? 0,
+      salt: 0,
+    };
+  }
   return { ...ZERO_MACROS };
 }
 

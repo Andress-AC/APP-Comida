@@ -61,6 +61,7 @@ export async function logFood(foodId: string, quantityGrams: number, mealType: s
   }
 
   revalidatePath("/hoy");
+  revalidatePath("/historial", "layout");
   revalidatePath("/despensa");
   return { success: true };
 }
@@ -105,6 +106,7 @@ export async function logRecipe(recipeId: string, multiplier: number, mealType: 
   }
 
   revalidatePath("/hoy");
+  revalidatePath("/historial", "layout");
   revalidatePath("/despensa");
   return { success: true };
 }
@@ -118,6 +120,7 @@ export async function updateLogQuantity(logId: string, quantityGrams: number | n
   const { error } = await supabase.from("daily_logs").update(update).eq("id", logId);
   if (error) return { error: error.message };
   revalidatePath("/hoy");
+  revalidatePath("/historial", "layout");
   return { success: true };
 }
 
@@ -126,6 +129,38 @@ export async function deleteLog(logId: string) {
   const { error } = await supabase.from("daily_logs").delete().eq("id", logId);
   if (error) return { error: error.message };
   revalidatePath("/hoy");
+  revalidatePath("/historial", "layout");
+  return { success: true };
+}
+
+export async function logCustomMacros(
+  name: string,
+  kcal: number,
+  protein: number | null,
+  fat: number | null,
+  carbs: number | null,
+  fiber: number | null,
+  mealType: string,
+  date?: string,
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const { error } = await supabase.from("daily_logs").insert({
+    user_id: user!.id,
+    date: date ?? await getUserEffectiveDate(),
+    meal_type: mealType,
+    custom_name: name || "Entrada personalizada",
+    custom_kcal: kcal,
+    custom_protein: protein,
+    custom_fat: fat,
+    custom_carbs: carbs,
+    custom_fiber: fiber,
+  });
+
+  if (error) return { error: error.message };
+  revalidatePath("/hoy");
+  revalidatePath("/historial", "layout");
   return { success: true };
 }
 

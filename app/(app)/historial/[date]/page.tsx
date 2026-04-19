@@ -1,10 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
-import { DailyLog, DailyExercise, MealCategory } from "@/lib/types";
+import { DailyLog, DailyExercise, FoodWithUnits, RecipeWithIngredients } from "@/lib/types";
 import { calcDayTotals } from "@/lib/macros";
 import { getEffectiveGoals, evaluateGoals } from "@/lib/goals";
 import { MACRO_LABELS, MACRO_UNITS, ALL_MACROS } from "@/lib/types";
 import ShareDayButton from "@/components/ShareDayButton";
 import LogEntry from "@/components/LogEntry";
+import ManualLogForm from "@/components/ManualLogForm";
+import { getFavorites } from "@/actions/favorites";
+import { fetchAllRows } from "@/lib/fetch-all-foods";
 
 export default async function DayDetailPage({
   params,
@@ -15,7 +18,7 @@ export default async function DayDetailPage({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [logsRes, goalsRes, overridesRes, noteRes, exerciseRes] = await Promise.all([
+  const [logsRes, goalsRes, overridesRes, noteRes, exerciseRes, foodsData, recipesRes, favs] = await Promise.all([
     supabase
       .from("daily_logs")
       .select("*, food:foods(*, food_units(*)), recipe:recipes(*, recipe_ingredients(*, food:foods(*)))")
@@ -36,6 +39,9 @@ export default async function DayDetailPage({
       .eq("user_id", user!.id)
       .eq("date", date)
       .order("created_at"),
+    fetchAllRows(supabase, "foods", "*, food_units(*)"),
+    supabase.from("recipes").select("*, recipe_ingredients(*, food:foods(*))").order("name"),
+    getFavorites(),
   ]);
 
   const logs = (logsRes.data ?? []) as DailyLog[];
@@ -172,7 +178,20 @@ export default async function DayDetailPage({
         {logs.map((log) => (
           <LogEntry key={log.id} log={log} />
         ))}
+        {logs.length === 0 && (
+          <p className="text-center py-4 text-sm" style={{ color: "var(--text-muted)" }}>
+            No hay registros este día
+          </p>
+        )}
       </div>
+
+      <ManualLogForm
+        foods={(foodsData ?? []) as FoodWithUnits[]}
+        recipes={(recipesRes.data ?? []) as RecipeWithIngredients[]}
+        favoriteFoodIds={favs.foodIds}
+        favoriteRecipeIds={favs.recipeIds}
+        date={date}
+      />
     </div>
   );
 }

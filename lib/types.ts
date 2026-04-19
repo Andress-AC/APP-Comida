@@ -148,6 +148,13 @@ export interface DailyLog {
   image_url: string | null;
   food?: FoodWithUnits;
   recipe?: RecipeWithIngredients;
+  // Custom macro entry (no food/recipe)
+  custom_name?: string | null;
+  custom_kcal?: number | null;
+  custom_protein?: number | null;
+  custom_fat?: number | null;
+  custom_carbs?: number | null;
+  custom_fiber?: number | null;
 }
 
 export interface PantryItem {
