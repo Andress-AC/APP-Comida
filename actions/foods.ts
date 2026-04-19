@@ -397,3 +397,35 @@ export async function deleteFoodUnit(unitId: string, foodId: string) {
   revalidatePath(`/alimentos/${foodId}`);
   return { success: true };
 }
+
+export async function updateFoodMacros(
+  foodId: string,
+  macros: {
+    kcal: number;
+    protein: number;
+    fat: number;
+    saturated_fat: number;
+    carbs: number;
+    sugar: number;
+    fiber: number;
+    salt: number;
+  }
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_admin) return { error: "No autorizado" };
+
+  const { error } = await supabase.from("foods").update(macros).eq("id", foodId);
+  if (error) return { error: error.message };
+  revalidatePath("/admin");
+  revalidatePath("/alimentos");
+  return { success: true };
+}

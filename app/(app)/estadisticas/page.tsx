@@ -6,6 +6,9 @@ import MacrosChart from "@/components/MacrosChart";
 import WeightChart from "@/components/WeightChart";
 import WeeklyAnalysis from "@/components/WeeklyAnalysis";
 import StreaksBadges from "@/components/StreaksBadges";
+import PeriodSelector from "@/components/PeriodSelector";
+import WeeklySummary from "@/components/WeeklySummary";
+import { Suspense } from "react";
 
 const ZERO: MacroTotals = { kcal: 0, protein: 0, fat: 0, saturated_fat: 0, carbs: 0, sugar: 0, fiber: 0, salt: 0 };
 
@@ -19,11 +22,8 @@ function calcCurrentStreak(dateSet: Set<string>, today: string): number {
   const cur = new Date(today + "T12:00:00");
   while (true) {
     cur.setDate(cur.getDate() - 1);
-    if (dateSet.has(cur.toISOString().split("T")[0])) {
-      streak++;
-    } else {
-      break;
-    }
+    if (dateSet.has(cur.toISOString().split("T")[0])) streak++;
+    else break;
   }
   return streak;
 }
@@ -46,22 +46,31 @@ function calcLongestStreak(sortedDates: string[]): number {
 }
 
 const BADGE_DEFS = [
-  { id: "first_day",   icon: "🌱", name: "Primer registro",  desc: "Empezaste a trackear",    condition: (t: number, l: number) => t >= 1 },
-  { id: "streak_3",    icon: "🔥", name: "3 días seguidos",  desc: "Racha de 3 días",          condition: (t: number, l: number) => l >= 3 },
-  { id: "streak_7",    icon: "⚡", name: "Semana completa",  desc: "7 días seguidos",           condition: (t: number, l: number) => l >= 7 },
-  { id: "days_10",     icon: "📅", name: "10 días",          desc: "10 días en total",          condition: (t: number, l: number) => t >= 10 },
-  { id: "streak_14",   icon: "💪", name: "Dos semanas",      desc: "14 días seguidos",          condition: (t: number, l: number) => l >= 14 },
-  { id: "days_30",     icon: "📊", name: "30 días",          desc: "30 días en total",          condition: (t: number, l: number) => t >= 30 },
-  { id: "streak_30",   icon: "🏆", name: "Mes de racha",     desc: "30 días seguidos",          condition: (t: number, l: number) => l >= 30 },
-  { id: "days_100",    icon: "💎", name: "100 días",         desc: "100 días en total",         condition: (t: number, l: number) => t >= 100 },
+  { id: "first_day",  icon: "🌱", name: "Primer registro", desc: "Empezaste a trackear",   condition: (t: number) => t >= 1 },
+  { id: "streak_3",   icon: "🔥", name: "3 días seguidos", desc: "Racha de 3 días",         condition: (_: number, l: number) => l >= 3 },
+  { id: "streak_7",   icon: "⚡", name: "Semana completa", desc: "7 días seguidos",          condition: (_: number, l: number) => l >= 7 },
+  { id: "days_10",    icon: "📅", name: "10 días",         desc: "10 días en total",         condition: (t: number) => t >= 10 },
+  { id: "streak_14",  icon: "💪", name: "Dos semanas",     desc: "14 días seguidos",         condition: (_: number, l: number) => l >= 14 },
+  { id: "days_30",    icon: "📊", name: "30 días",         desc: "30 días en total",         condition: (t: number) => t >= 30 },
+  { id: "streak_30",  icon: "🏆", name: "Mes de racha",    desc: "30 días seguidos",         condition: (_: number, l: number) => l >= 30 },
+  { id: "days_100",   icon: "💎", name: "100 días",        desc: "100 días en total",        condition: (t: number) => t >= 100 },
 ];
 
-export default async function EstadisticasPage() {
+const VALID_DAYS = [7, 30, 90];
+
+export default async function EstadisticasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string }>;
+}) {
+  const sp = await searchParams;
+  const days = VALID_DAYS.includes(Number(sp?.days)) ? Number(sp.days) : 30;
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   const fromDate = new Date();
-  fromDate.setDate(fromDate.getDate() - 29);
+  fromDate.setDate(fromDate.getDate() - (days - 1));
   const fromDateStr = fromDate.toISOString().split("T")[0];
   const today = new Date().toISOString().split("T")[0];
 
@@ -92,7 +101,7 @@ export default async function EstadisticasPage() {
 
   // Build day map for charts
   const dayMap = new Map<string, MacroTotals>();
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < days; i++) {
     const d = new Date(fromDate);
     d.setDate(d.getDate() + i);
     dayMap.set(d.toISOString().split("T")[0], { ...ZERO });
@@ -116,12 +125,12 @@ export default async function EstadisticasPage() {
   const kcalTarget = kcalGoal?.value_min ?? kcalGoal?.value_max ?? null;
 
   const daysWithData = chartData.filter((d) => d.kcal > 0);
-  const avgKcal    = daysWithData.length ? Math.round(daysWithData.reduce((s, d) => s + d.kcal, 0)    / daysWithData.length) : 0;
+  const avgKcal    = daysWithData.length ? Math.round(daysWithData.reduce((s, d) => s + d.kcal,    0) / daysWithData.length) : 0;
   const avgProtein = daysWithData.length ? Math.round(daysWithData.reduce((s, d) => s + d.protein, 0) / daysWithData.length) : 0;
-  const avgCarbs   = daysWithData.length ? Math.round(daysWithData.reduce((s, d) => s + d.carbs, 0)   / daysWithData.length) : 0;
-  const avgFat     = daysWithData.length ? Math.round(daysWithData.reduce((s, d) => s + d.fat, 0)     / daysWithData.length) : 0;
+  const avgCarbs   = daysWithData.length ? Math.round(daysWithData.reduce((s, d) => s + d.carbs,   0) / daysWithData.length) : 0;
+  const avgFat     = daysWithData.length ? Math.round(daysWithData.reduce((s, d) => s + d.fat,     0) / daysWithData.length) : 0;
 
-  // Streak & badges calculation
+  // Streaks & badges
   const uniqueDates = [...new Set((allDatesResult.data ?? []).map((r: any) => r.date as string))].sort();
   const dateSet = new Set(uniqueDates);
   const totalDays = uniqueDates.length;
@@ -138,7 +147,12 @@ export default async function EstadisticasPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="heading-display text-2xl">Estadísticas</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="heading-display text-2xl">Estadísticas</h1>
+        <Suspense>
+          <PeriodSelector current={days} />
+        </Suspense>
+      </div>
 
       {/* Streaks & Badges */}
       <div className="glass-card-static p-4 space-y-3">
@@ -148,11 +162,19 @@ export default async function EstadisticasPage() {
         <StreaksBadges stats={{ currentStreak, longestStreak, totalDays }} badges={badges} />
       </div>
 
+      {/* Weekly summary */}
+      <div className="glass-card-static p-4 space-y-3">
+        <p className="text-sm font-semibold" style={{ color: "var(--text-secondary)" }}>
+          Semana actual
+        </p>
+        <WeeklySummary data={chartData} kcalTarget={kcalTarget} />
+      </div>
+
       {/* Averages summary */}
       {daysWithData.length > 0 && (
         <div className="glass-card-static p-4">
           <p className="text-xs text-white/40 uppercase tracking-wider mb-3">
-            Promedio últimos {daysWithData.length} días
+            Promedio · {days}d ({daysWithData.length} días con datos)
           </p>
           <div className="grid grid-cols-4 gap-2 text-center">
             <div>

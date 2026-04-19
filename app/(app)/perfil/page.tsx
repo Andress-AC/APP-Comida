@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "@/actions/auth";
+import Link from "next/link";
 
 export default async function PerfilPage() {
   const supabase = await createClient();
@@ -63,6 +64,52 @@ export default async function PerfilPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin tools */}
+      {profile?.is_admin && (
+        <div className="glass-card-static p-4 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            Admin
+          </p>
+          <Link
+            href="/admin"
+            className="flex items-center justify-between py-2 px-3 rounded-xl transition-all"
+            style={{ background: "var(--amber-glow)", border: "1px solid var(--border-warm)" }}
+          >
+            <span className="text-sm font-medium" style={{ color: "var(--amber)" }}>
+              Alimentos sin macros completos
+            </span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--amber)" }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+          <Link
+            href="/compra"
+            className="flex items-center justify-between py-2 px-3 rounded-xl transition-all"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--border-subtle)" }}
+          >
+            <span className="text-sm" style={{ color: "var(--text-secondary)" }}>
+              Lista de la compra
+            </span>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--text-muted)" }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
+      )}
+
+      {/* Lista de la compra for all users */}
+      {!profile?.is_admin && (
+        <Link
+          href="/compra"
+          className="flex items-center justify-between glass-card p-4"
+        >
+          <span className="text-sm" style={{ color: "var(--text-secondary)" }}>Lista de la compra</span>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: "var(--text-muted)" }}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      )}
 
       <div className="glass-card p-4 text-xs space-y-1" style={{ color: "var(--text-muted)" }}>
         <p className="font-medium" style={{ color: "var(--text-secondary)" }}>NailedMacros</p>
