@@ -7,6 +7,7 @@ import { updateRecipeName, deleteRecipe } from "@/actions/recipes";
 import RecipeIngredientEditor from "./RecipeIngredientEditor";
 import RecipeCategorySelect from "@/components/RecipeCategorySelect";
 import DuplicateRecipeButton from "./DuplicateRecipeButton";
+import ElaborationEditor from "./ElaborationEditor";
 
 export default async function RecipeDetailPage({
   params,
@@ -78,6 +79,8 @@ export default async function RecipeDetailPage({
           availableFoods={foods}
         />
       </section>
+
+      <ElaborationEditor recipeId={id} initial={recipe.elaboration ?? null} />
 
       <DuplicateRecipeButton recipeId={id} />
 

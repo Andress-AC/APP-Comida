@@ -49,6 +49,14 @@ export async function updateRecipeCategories(id: string, categories: string[]) {
   return { success: true };
 }
 
+export async function updateRecipeElaboration(id: string, elaboration: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("recipes").update({ elaboration }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath(`/recetas/${id}`);
+  return { success: true };
+}
+
 export async function updateRecipeName(id: string, name: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("recipes").update({ name }).eq("id", id);

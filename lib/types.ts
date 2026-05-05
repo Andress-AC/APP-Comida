@@ -118,6 +118,7 @@ export interface Recipe {
   name: string;
   categories: MealCategory[];
   image_url: string | null;
+  elaboration: string | null;
   created_by: string;
   created_at: string;
 }
