@@ -176,6 +176,8 @@ export default function ManualLogForm({ foods, recipes, favoriteFoodIds, favorit
             foods={sortedFoods as FoodOption[]}
             onSelect={(food) => { setSelectedFood(food as FoodWithUnits); setUnit("grams"); }}
             placeholder="Buscar alimento..."
+            showCategoryFilter={false}
+            favoriteFoodIds={favoriteFoodIds}
           />
           {selectedFood && (
             <p className="text-xs px-2 py-1 rounded-lg" style={{ color: "var(--amber)", background: "var(--amber-glow)" }}>

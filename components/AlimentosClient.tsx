@@ -7,6 +7,7 @@ import FoodCard from "@/components/FoodCard";
 import FoodListButton, { UserList } from "@/components/FoodListButton";
 import { bulkDeleteFoods, bulkUpdateCategory, bulkUpdateSubcategory } from "@/actions/foods";
 import { createList, deleteList } from "@/actions/food-lists";
+import { smartSearch, norm } from "@/lib/search";
 
 type Store = "mercadona" | "consum" | "otros";
 
@@ -29,13 +30,6 @@ function getStore(food: FoodWithUnits): Store {
   return "otros";
 }
 
-// ─── Accent normalization ────────────────────────────────────────────────────
-function norm(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
 
 // ─── Bigram similarity for fuzzy suggestions ─────────────────────────────────
 function bigrams(s: string): string[] {
@@ -177,37 +171,18 @@ export default function AlimentosClient({ foods, favIds, isAdmin = false, lists 
   const normSearch = norm(search.trim());
 
   const filtered = useMemo(() => {
-    const results = foods.filter((f) => {
+    // Base filter: store + category + subcategory
+    const base = foods.filter((f) => {
       if (!activeStores.has(getStore(f))) return false;
       if (categoryFilter && (f.category ?? "Otros") !== categoryFilter) return false;
       if (subcategoryFilter && (f.subcategory ?? "") !== subcategoryFilter) return false;
-      if (normSearch) {
-        return (
-          norm(f.name).includes(normSearch) ||
-          norm(f.brand ?? "").includes(normSearch)
-        );
-      }
       return true;
     });
 
-    // In search mode, rank: exact match > starts with > contains (then alphabetical)
-    if (normSearch) {
-      results.sort((a, b) => {
-        const na = norm(a.name);
-        const nb = norm(b.name);
-        const aExact = na === normSearch;
-        const bExact = nb === normSearch;
-        if (aExact && !bExact) return -1;
-        if (bExact && !aExact) return 1;
-        const aStarts = na.startsWith(normSearch);
-        const bStarts = nb.startsWith(normSearch);
-        if (aStarts && !bStarts) return -1;
-        if (bStarts && !aStarts) return 1;
-        return na.localeCompare(nb);
-      });
-    }
+    if (!normSearch) return base;
 
-    return results;
+    // Smart search: word-prefix tokenization via smartSearch (returns pre-sorted)
+    return smartSearch(base, normSearch, (f) => f.name, (f) => f.brand ?? undefined, base.length);
   }, [foods, activeStores, categoryFilter, subcategoryFilter, normSearch]);
 
   // Fuzzy suggestion when no results

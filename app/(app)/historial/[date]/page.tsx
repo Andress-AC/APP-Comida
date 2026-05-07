@@ -4,7 +4,7 @@ import { calcDayTotals } from "@/lib/macros";
 import { getEffectiveGoals, evaluateGoals } from "@/lib/goals";
 import { MACRO_LABELS, MACRO_UNITS, ALL_MACROS } from "@/lib/types";
 import ShareDayButton from "@/components/ShareDayButton";
-import LogEntry from "@/components/LogEntry";
+import LogsByMeal from "@/components/LogsByMeal";
 import ManualLogForm from "@/components/ManualLogForm";
 import { getFavorites } from "@/actions/favorites";
 import { fetchAllRows } from "@/lib/fetch-all-foods";
@@ -175,14 +175,7 @@ export default async function DayDetailPage({
 
       <div className="space-y-2">
         <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">Detalle de comidas ({logs.length})</h2>
-        {logs.map((log) => (
-          <LogEntry key={log.id} log={log} />
-        ))}
-        {logs.length === 0 && (
-          <p className="text-center py-4 text-sm" style={{ color: "var(--text-muted)" }}>
-            No hay registros este día
-          </p>
-        )}
+        <LogsByMeal logs={logs} />
       </div>
 
       <ManualLogForm

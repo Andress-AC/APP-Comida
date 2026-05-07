@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { FOOD_CATEGORIES } from "@/lib/categories";
+import { smartSearch, norm } from "@/lib/search";
 
 export interface FoodOption {
   id: string;
@@ -20,10 +21,8 @@ interface Props {
   onSelect: (food: FoodOption) => void;
   placeholder?: string;
   showCategoryFilter?: boolean;
-}
-
-function normalize(s: string) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  /** Favorite food IDs \u2014 shown first when no search is typed */
+  favoriteFoodIds?: Set<string>;
 }
 
 export default function FoodSelector({
@@ -31,6 +30,7 @@ export default function FoodSelector({
   onSelect,
   placeholder = "Buscar alimento...",
   showCategoryFilter = true,
+  favoriteFoodIds,
 }: Props) {
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -39,38 +39,31 @@ export default function FoodSelector({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // --- Search with ranked results: exact > starts-with > contains ---
+  // --- Smart search with word-prefix tokenization ---
   const filtered = useMemo(() => {
-    if (!search.trim() && !categoryFilter) return [];
-    const q = normalize(search.trim());
+    const catFiltered = categoryFilter
+      ? foods.filter((f) => (f.category ?? "Otros") === categoryFilter)
+      : foods;
 
-    const results = foods.filter((f) => {
-      if (categoryFilter && (f.category ?? "Otros") !== categoryFilter) return false;
-      if (q) return normalize(f.name).includes(q) || normalize(f.brand ?? "").includes(q);
-      return true;
-    });
+    const q = search.trim();
 
-    if (q) {
-      results.sort((a, b) => {
-        const na = normalize(a.name);
-        const nb = normalize(b.name);
-        // 1. Exact match
-        const aExact = na === q;
-        const bExact = nb === q;
-        if (aExact && !bExact) return -1;
-        if (bExact && !aExact) return 1;
-        // 2. Starts with query
-        const aStarts = na.startsWith(q);
-        const bStarts = nb.startsWith(q);
-        if (aStarts && !bStarts) return -1;
-        if (bStarts && !aStarts) return 1;
-        // 3. Alphabetical
-        return na.localeCompare(nb);
-      });
+    // No search typed \u2192 show favorites (or nothing if no favorites prop given)
+    if (!q) {
+      if (!favoriteFoodIds || favoriteFoodIds.size === 0) return [];
+      return catFiltered
+        .filter((f) => favoriteFoodIds.has(f.id))
+        .sort((a, b) => norm(a.name).localeCompare(norm(b.name)))
+        .slice(0, 40);
     }
 
-    return results.slice(0, 60);
-  }, [foods, search, categoryFilter]);
+    return smartSearch(
+      catFiltered,
+      q,
+      (f) => f.name,
+      (f) => f.brand,
+      60
+    );
+  }, [foods, search, categoryFilter, favoriteFoodIds]);
 
   // --- Dropdown position: accounts for visualViewport offset (mobile keyboard) ---
   const calcPos = useCallback(() => {
@@ -128,6 +121,9 @@ export default function FoodSelector({
   const touchStartY = useRef(0);
   const touchMoved = useRef(false);
 
+  // Show "favorites" header when showing favorites (no search)
+  const showingFavorites = !search.trim() && filtered.length > 0;
+
   const dropdown = open && filtered.length > 0 && dropPos ? createPortal(
     <div
       id="food-selector-portal"
@@ -155,6 +151,13 @@ export default function FoodSelector({
         }
       }}
     >
+      {showingFavorites && (
+        <div className="px-3 pt-2 pb-1">
+          <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            ⭐ Favoritos
+          </span>
+        </div>
+      )}
       {filtered.map((f) => (
         <button
           key={f.id}
@@ -242,7 +245,7 @@ export default function FoodSelector({
           placeholder={placeholder}
           value={search}
           onChange={(e) => { setSearch(e.target.value); setOpen(true); calcPos(); }}
-          onFocus={() => { if (search || categoryFilter) { setOpen(true); calcPos(); } }}
+          onFocus={() => { setOpen(true); calcPos(); }}
           className="input-dark w-full"
           autoComplete="off"
         />

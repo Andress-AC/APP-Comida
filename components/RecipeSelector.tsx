@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { smartSearch, norm } from "@/lib/search";
 
 export interface RecipeOption {
   id: string;
@@ -18,10 +19,6 @@ interface Props {
   placeholder?: string;
   /** Controlled value — name of the currently selected recipe (to show in the input) */
   value?: string;
-}
-
-function norm(s: string) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 export default function RecipeSelector({
@@ -44,9 +41,9 @@ export default function RecipeSelector({
     if (value !== undefined) setSearch(value);
   }, [value]);
 
-  // --- Ranked results ---
+  // --- Smart search + favorites-first when empty ---
   const items = useMemo(() => {
-    const q = norm(search.trim());
+    const q = search.trim();
 
     if (!q) {
       // No search: favorites first, then alphabetical
@@ -58,30 +55,9 @@ export default function RecipeSelector({
       });
     }
 
-    // With search: filter + rank
-    const filtered = recipes.filter(
-      (r) => norm(r.name).includes(q)
-    );
-    filtered.sort((a, b) => {
-      const na = norm(a.name);
-      const nb = norm(b.name);
-      // Exact match first
-      if (na === q && nb !== q) return -1;
-      if (nb === q && na !== q) return 1;
-      // Starts with
-      const as_ = na.startsWith(q);
-      const bs_ = nb.startsWith(q);
-      if (as_ && !bs_) return -1;
-      if (bs_ && !as_) return 1;
-      // Favorites among equals
-      const af = favoriteIds?.has(a.id) ? 0 : 1;
-      const bf = favoriteIds?.has(b.id) ? 0 : 1;
-      if (af !== bf) return af - bf;
-      return na.localeCompare(nb);
-    });
-    return filtered.slice(0, 50);
+    // With search: smart word-prefix search
+    return smartSearch(recipes, q, (r) => r.name, undefined, 50);
   }, [recipes, favoriteIds, search]);
-
   // --- Dropdown position ---
   const calcPos = useCallback(() => {
     const input = inputRef.current;

@@ -3,10 +3,7 @@
 import { useMemo, useState } from "react";
 import { RecipeWithIngredients } from "@/lib/types";
 import RecipeCard from "@/components/RecipeCard";
-
-function norm(s: string) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-}
+import { smartSearch, norm } from "@/lib/search";
 
 interface Props {
   recipes: RecipeWithIngredients[];
@@ -17,7 +14,7 @@ export default function RecetasClient({ recipes, favIds }: Props) {
   const [search, setSearch] = useState("");
 
   const displayed = useMemo(() => {
-    const q = norm(search.trim());
+    const q = search.trim();
 
     if (!q) {
       // No search: favorites first, then alphabetical
@@ -29,24 +26,8 @@ export default function RecetasClient({ recipes, favIds }: Props) {
       });
     }
 
-    // With search: filter + rank (exact > starts-with > contains)
-    const filtered = recipes.filter((r) => norm(r.name).includes(q));
-    filtered.sort((a, b) => {
-      const na = norm(a.name);
-      const nb = norm(b.name);
-      if (na === q && nb !== q) return -1;
-      if (nb === q && na !== q) return 1;
-      const as_ = na.startsWith(q);
-      const bs_ = nb.startsWith(q);
-      if (as_ && !bs_) return -1;
-      if (bs_ && !as_) return 1;
-      // Favorites among equals
-      const af = favIds.has(a.id) ? 0 : 1;
-      const bf = favIds.has(b.id) ? 0 : 1;
-      if (af !== bf) return af - bf;
-      return na.localeCompare(nb);
-    });
-    return filtered;
+    // With search: smart word-prefix search
+    return smartSearch(recipes, q, (r) => r.name, undefined, recipes.length);
   }, [recipes, favIds, search]);
 
   return (

@@ -25,6 +25,7 @@ export default function BarcodeScanner() {
   const animFrameRef = useRef<number>(0);
   const [state, setState] = useState<ScanState>("idle");
   const [food, setFood] = useState<BarcodeFood | null>(null);
+  const [editedName, setEditedName] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [manualCode, setManualCode] = useState("");
   const [hasDetector, setHasDetector] = useState(false);
@@ -54,6 +55,7 @@ export default function BarcodeScanner() {
       }
       stopCamera();
       setFood(data);
+      setEditedName(data.name || "");
       setState("detected");
     } catch {
       setErrorMsg("Error de conexión");
@@ -103,7 +105,7 @@ export default function BarcodeScanner() {
   async function handleImport() {
     if (!food) return;
     setState("importing");
-    const result = await importFoodFromBarcode(food);
+    const result = await importFoodFromBarcode({ ...food, name: editedName.trim() || food.name });
     if (result.error) {
       setErrorMsg(result.error);
       setState("error");
@@ -116,6 +118,7 @@ export default function BarcodeScanner() {
     stopCamera();
     setState("idle");
     setFood(null);
+    setEditedName("");
     setErrorMsg("");
     setManualCode("");
   }
@@ -203,9 +206,16 @@ export default function BarcodeScanner() {
                   className="h-14 w-14 object-contain rounded flex-shrink-0"
                 />
               )}
-              <div>
-                <p className="font-semibold text-white/90 text-sm">{food.name || "(sin nombre)"}</p>
-                <p className="text-xs text-white/40">{food.brand}</p>
+              <div className="flex-1 min-w-0">
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  className="w-full font-semibold text-sm bg-transparent border-b focus:outline-none focus:border-amber-500 pb-0.5"
+                  style={{ color: "var(--text-primary)", borderColor: "var(--border-subtle)" }}
+                  placeholder="Nombre del producto"
+                />
+                <p className="text-xs text-white/40 mt-0.5">{food.brand}</p>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-1.5 text-xs text-white/50 pt-1">

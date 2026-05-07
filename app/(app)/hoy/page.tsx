@@ -4,8 +4,8 @@ import { calcDayTotals } from "@/lib/macros";
 import { getEffectiveGoals } from "@/lib/goals";
 import { getEffectiveDate, getEffectiveDateStr } from "@/lib/dates";
 import MacroDashboard from "@/components/MacroDashboard";
-import LogEntry from "@/components/LogEntry";
 import ManualLogForm from "@/components/ManualLogForm";
+import LogsByMeal from "@/components/LogsByMeal";
 import AiInput from "@/components/AiInput";
 import AiRecommendation from "@/components/AiRecommendation";
 import DailyNoteEditor from "@/components/DailyNoteEditor";
@@ -136,14 +136,7 @@ export default async function HoyPage() {
         <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider">
           Registros de hoy ({logs.length})
         </h2>
-        {logs.map((log) => (
-          <LogEntry key={log.id} log={log} />
-        ))}
-        {logs.length === 0 && (
-          <p className="text-white/30 text-center py-4 text-sm">
-            No has registrado nada todavía
-          </p>
-        )}
+        <LogsByMeal logs={logs} />
       </div>
 
       <ExerciseSection
