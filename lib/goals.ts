@@ -11,8 +11,30 @@ export interface GoalStatus {
 }
 
 /**
+ * Pick the most recently applicable goal for each macro from a list of candidates.
+ * "Applicable" means valid_from <= dateStr. Among those, the one with the latest valid_from wins.
+ */
+function pickLatest(
+  candidates: UserGoal[],
+  dateStr: string
+): Map<MacroKey, UserGoal> {
+  const best = new Map<MacroKey, UserGoal>();
+  for (const g of candidates) {
+    const vf = g.valid_from ?? "2000-01-01"; // fallback for legacy rows without the column
+    if (vf > dateStr) continue; // not applicable yet
+    const current = best.get(g.macro);
+    if (!current || vf > (current.valid_from ?? "2000-01-01")) {
+      best.set(g.macro, g);
+    }
+  }
+  return best;
+}
+
+/**
  * Get the effective goals for a specific date.
  * Priority: goal_overrides > day-of-week goals > default goals (day_of_week = null)
+ * Within each tier, the goal with the latest valid_from that is <= date wins,
+ * so historical days are not affected when goals change.
  */
 export function getEffectiveGoals(
   goals: UserGoal[],
@@ -24,36 +46,22 @@ export function getEffectiveGoals(
 
   const effective = new Map<MacroKey, { goalType: string; min: number | null; max: number | null }>();
 
-  // 1. Start with defaults (day_of_week = null)
-  for (const g of goals) {
-    if (g.day_of_week === null) {
-      effective.set(g.macro, {
-        goalType: g.goal_type,
-        min: g.value_min,
-        max: g.value_max,
-      });
-    }
+  // 1. Default goals (day_of_week = null) — most recent valid_from <= date
+  const defaultGoals = goals.filter((g) => g.day_of_week === null);
+  for (const [macro, g] of pickLatest(defaultGoals, dateStr)) {
+    effective.set(macro, { goalType: g.goal_type, min: g.value_min, max: g.value_max });
   }
 
-  // 2. Override with day-of-week specific
-  for (const g of goals) {
-    if (g.day_of_week === dayOfWeek) {
-      effective.set(g.macro, {
-        goalType: g.goal_type,
-        min: g.value_min,
-        max: g.value_max,
-      });
-    }
+  // 2. Day-of-week specific — most recent valid_from <= date
+  const dowGoals = goals.filter((g) => g.day_of_week === dayOfWeek);
+  for (const [macro, g] of pickLatest(dowGoals, dateStr)) {
+    effective.set(macro, { goalType: g.goal_type, min: g.value_min, max: g.value_max });
   }
 
-  // 3. Override with date-specific
+  // 3. Date-specific overrides (unchanged — these are already per-date)
   for (const o of overrides) {
     if (o.date === dateStr) {
-      effective.set(o.macro, {
-        goalType: o.goal_type,
-        min: o.value_min,
-        max: o.value_max,
-      });
+      effective.set(o.macro, { goalType: o.goal_type, min: o.value_min, max: o.value_max });
     }
   }
 

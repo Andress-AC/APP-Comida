@@ -37,11 +37,20 @@ export default async function ObjetivosPage() {
     .order("date");
 
   const goalsList = goals ?? [];
+  const today = new Date().toISOString().split("T")[0];
 
+  // Return the most recently applicable goal (latest valid_from <= today)
   function findGoal(macro: MacroKey, dayOfWeek: number | null) {
-    return goalsList.find(
-      (g: UserGoal) => g.macro === macro && g.day_of_week === dayOfWeek
-    );
+    return goalsList
+      .filter(
+        (g: UserGoal) =>
+          g.macro === macro &&
+          g.day_of_week === dayOfWeek &&
+          (g.valid_from ?? "2000-01-01") <= today
+      )
+      .sort((a: UserGoal, b: UserGoal) =>
+        (b.valid_from ?? "2000-01-01").localeCompare(a.valid_from ?? "2000-01-01")
+      )[0];
   }
 
   return (

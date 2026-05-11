@@ -32,19 +32,26 @@ export async function upsertGoal(
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let deleteQuery = supabase
+  const today = new Date().toISOString().split("T")[0];
+
+  // Only delete a row that was already created today for the same macro+dayOfWeek
+  // (so the user can correct themselves within the same day without leaving duplicates).
+  // Rows from previous days are kept intact — they serve as historical snapshots.
+  let deleteTodayQuery = supabase
     .from("user_goals")
     .delete()
     .eq("user_id", user!.id)
-    .eq("macro", macro);
+    .eq("macro", macro)
+    .eq("valid_from", today);
 
   if (dayOfWeek === null) {
-    deleteQuery = deleteQuery.is("day_of_week", null);
+    deleteTodayQuery = deleteTodayQuery.is("day_of_week", null);
   } else {
-    deleteQuery = deleteQuery.eq("day_of_week", dayOfWeek);
+    deleteTodayQuery = deleteTodayQuery.eq("day_of_week", dayOfWeek);
   }
-  await deleteQuery;
+  await deleteTodayQuery;
 
+  // Insert new row valid from today. Historical rows (valid_from < today) remain untouched.
   const { error } = await supabase.from("user_goals").insert({
     user_id: user!.id,
     macro,
@@ -52,10 +59,12 @@ export async function upsertGoal(
     value_min: valueMin,
     value_max: valueMax,
     day_of_week: dayOfWeek,
+    valid_from: today,
   });
 
   if (error) return { error: error.message };
   revalidatePath("/objetivos");
+  revalidatePath("/hoy");
   return { success: true };
 }
 
@@ -63,11 +72,16 @@ export async function removeGoal(macro: MacroKey, dayOfWeek: number | null) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  const today = new Date().toISOString().split("T")[0];
+
+  // Only delete rows valid from today onwards.
+  // Historical rows (valid_from < today) stay so past days keep their goal context.
   let query = supabase
     .from("user_goals")
     .delete()
     .eq("user_id", user!.id)
-    .eq("macro", macro);
+    .eq("macro", macro)
+    .gte("valid_from", today);
 
   if (dayOfWeek === null) {
     query = query.is("day_of_week", null);
@@ -78,6 +92,7 @@ export async function removeGoal(macro: MacroKey, dayOfWeek: number | null) {
   const { error } = await query;
   if (error) return { error: error.message };
   revalidatePath("/objetivos");
+  revalidatePath("/hoy");
   return { success: true };
 }
 

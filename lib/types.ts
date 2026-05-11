@@ -177,6 +177,8 @@ export interface UserGoal {
   value_min: number | null;
   value_max: number | null;
   day_of_week: number | null;
+  /** ISO date (YYYY-MM-DD). Goal applies from this date onwards. Default '2000-01-01' for legacy rows. */
+  valid_from: string;
   created_at: string;
 }
 
