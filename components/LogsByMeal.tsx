@@ -29,6 +29,8 @@ export default function LogsByMeal({ logs }: Props) {
     );
   }
 
+  const r = (n: number) => Math.round(n * 10) / 10;
+
   // Group logs by meal_type
   const groups = new Map<MealCategory, DailyLog[]>();
   for (const log of logs) {
@@ -45,8 +47,10 @@ export default function LogsByMeal({ logs }: Props) {
   return (
     <div className="space-y-4">
       {orderedGroups.map(({ meal, logs: mealLogs }) => {
-        const mealKcal = mealLogs.reduce((sum, log) => sum + calcLogMacros(log).kcal, 0);
+        const mealKcal   = mealLogs.reduce((sum, log) => sum + calcLogMacros(log).kcal,    0);
         const mealProtein = mealLogs.reduce((sum, log) => sum + calcLogMacros(log).protein, 0);
+        const mealFat    = mealLogs.reduce((sum, log) => sum + calcLogMacros(log).fat,     0);
+        const mealCarbs  = mealLogs.reduce((sum, log) => sum + calcLogMacros(log).carbs,   0);
 
         return (
           <section key={meal}>
@@ -58,13 +62,16 @@ export default function LogsByMeal({ logs }: Props) {
                   {MEAL_CATEGORY_LABELS[meal]}
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold" style={{ color: "var(--amber)" }}>
+              <div className="flex items-center gap-1.5 text-xs flex-wrap justify-end">
+                <span className="font-semibold" style={{ color: "var(--amber)" }}>
                   {Math.round(mealKcal)} kcal
                 </span>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  · {Math.round(mealProtein * 10) / 10}g prot
-                </span>
+                <span style={{ color: "var(--text-muted)" }}>·</span>
+                <span style={{ color: "var(--text-muted)" }}>{r(mealProtein)}g P</span>
+                <span style={{ color: "var(--text-muted)" }}>·</span>
+                <span style={{ color: "var(--text-muted)" }}>{r(mealFat)}g G</span>
+                <span style={{ color: "var(--text-muted)" }}>·</span>
+                <span style={{ color: "var(--text-muted)" }}>{r(mealCarbs)}g C</span>
               </div>
             </div>
 

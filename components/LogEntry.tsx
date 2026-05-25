@@ -252,9 +252,7 @@ export default function LogEntry({ log }: { log: DailyLog }) {
                   <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">
                     {!isCustom && <span className="underline decoration-dotted underline-offset-2">{detail}</span>}
                     {!isCustom && " — "}
-                    {macros.kcal} kcal · {macros.protein}g prot
-                    {isCustom && macros.fat > 0 && ` · ${macros.fat}g grasa`}
-                    {isCustom && macros.carbs > 0 && ` · ${macros.carbs}g carbs`}
+                    {macros.kcal} kcal · {macros.protein}g P · {macros.fat}g G · {macros.carbs}g C
                   </p>
                 </button>
               )}
